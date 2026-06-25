@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power Query Cleaning Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f4f0;
+    color: #1a1a18;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .shell { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: #1e1e1c;
+    color: #c8c6be;
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid #333330;
+  }
+  .sidebar-header .logo {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6c6b64;
+    margin-bottom: 6px;
+  }
+  .sidebar-header h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f0ede6;
+    line-height: 1.3;
+  }
+
+  .sidebar-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #4a4a44;
+    padding: 20px 20px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+    color: #8a8880;
+    font-size: 13.5px;
+  }
+  .nav-item:hover { background: #2a2a27; color: #d0cec6; }
+  .nav-item.active {
+    background: #2e2e2b;
+    border-left-color: #f0a500;
+    color: #f0ede6;
+  }
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #4a4a44;
+    flex-shrink: 0;
+  }
+  .nav-item.active .nav-dot { background: #f0a500; }
+  .nav-item.done .nav-dot { background: #3ab57a; }
+  .nav-item.done { color: #7ab897; }
+
+  .main { flex: 1; padding: 40px 48px; max-width: 860px; }
+
+  /* ── Step cards ── */
+  .step-card {
+    display: none;
+    animation: fadeIn 0.2s ease;
+  }
+  .step-card.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .step-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #b07400;
+    margin-bottom: 8px;
+  }
+  .step-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1a1a18;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .step-desc {
+    font-size: 15px;
+    color: #555550;
+    margin-bottom: 28px;
+    max-width: 620px;
+    line-height: 1.65;
+  }
+
+  /* ── Sub-steps ── */
+  .substep {
+    background: #fff;
+    border: 1px solid #e4e2db;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .substep-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .substep-header:hover { background: #faf9f6; }
+  .substep-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #f0ede6;
+    color: #888880;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .substep.open .substep-num { background: #fff3d0; color: #b07400; }
+  .substep-label { font-weight: 600; font-size: 14px; flex: 1; }
+  .substep-meta { font-size: 12px; color: #aaa8a0; }
+  .substep-chevron {
+    font-size: 12px; color: #aaa8a0;
+    transition: transform 0.2s;
+  }
+  .substep.open .substep-chevron { transform: rotate(180deg); }
+
+  .substep-body {
+    display: none;
+    padding: 0 20px 20px;
+    border-top: 1px solid #f0ede6;
+  }
+  .substep.open .substep-body { display: block; }
+
+  /* ── Where to click pill ── */
+  .where {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fff3d0;
+    color: #8a5a00;
+    border: 1px solid #f0d070;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 14px 0 10px;
+  }
+  .where .arrow { font-size: 10px; color: #c09030; }
+
+  /* ── Steps list ── */
+  .click-steps { list-style: none; counter-reset: cstep; margin: 8px 0; }
+  .click-steps li {
+    counter-increment: cstep;
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f4f0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #333330;
+    align-items: flex-start;
+  }
+  .click-steps li:last-child { border-bottom: none; }
+  .click-steps li::before {
+    content: counter(cstep);
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: #1e1e1c;
+    color: #f0ede6;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── Code / formula box ── */
+  .formula-box {
+    background: #1e1e1c;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    font-size: 12.5px;
+    color: #c8c6be;
+    line-height: 1.7;
+    overflow-x: auto;
+    position: relative;
+  }
+  .formula-box .keyword { color: #f0a500; }
+  .formula-box .string  { color: #98c379; }
+  .formula-box .comment { color: #555550; font-style: italic; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: #333330; border: none; color: #888880;
+    padding: 4px 10px; border-radius: 4px; font-size: 11px;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+  }
+  .copy-btn:hover { background: #444440; color: #f0ede6; }
+  .copy-btn.copied { background: #1a3a2a; color: #3ab57a; }
+
+  /* ── Result preview ── */
+  .result-preview {
+    background: #f5f4f0;
+    border: 1px solid #e4e2db;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 12px;
+  }
+  .result-preview .rp-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #888880; margin-bottom: 10px;
+  }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+  }
+  .tag.bad  { background: #fde8e8; color: #a83232; border: 1px solid #f5c0c0; }
+  .tag.good { background: #e2f5ec; color: #1a6640; border: 1px solid #b0dfc4; }
+  .tag.arrow-label { background: none; color: #aaa8a0; font-size: 18px; padding: 0 4px; }
+
+  /* ── Note box ── */
+  .note {
+    background: #fff8e6;
+    border-left: 3px solid #f0a500;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #6a5010;
+    margin: 12px 0;
+    line-height: 1.5;
+  }
+
+  /* ── Table preview ── */
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; }
+  .mini-table th {
+    background: #1e1e1c; color: #c8c6be;
+    padding: 7px 12px; text-align: left;
+    font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .mini-table td { padding: 7px 12px; border-bottom: 1px solid #f0ede6; }
+  .mini-table tr:last-child td { border-bottom: none; }
+  .mini-table tr:nth-child(even) td { background: #faf9f6; }
+  .cell-bad  { color: #a83232; font-weight: 600; }
+  .cell-good { color: #1a6640; font-weight: 600; }
+  .cell-null { color: #aaa8a0; font-style: italic; }
+
+  /* ── Navigation buttons ── */
+  .nav-btns {
+    display: flex; gap: 12px; margin-top: 36px;
+    padding-top: 24px; border-top: 1px solid #e4e2db;
+  }
+  .btn {
+    padding: 10px 20px; border-radius: 8px; font-size: 14px;
+    font-weight: 600; cursor: pointer; border: none;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #1e1e1c; color: #f0ede6; }
+  .btn-primary:hover { background: #333330; }
+  .btn-secondary { background: #fff; color: #555550; border: 1px solid #d8d6ce; }
+  .btn-secondary:hover { background: #f5f4f0; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── Progress bar ── */
+  .progress-bar {
+    height: 3px; background: #e4e2db;
+    margin-bottom: 32px; border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: #f0a500;
+    border-radius: 2px; transition: width 0.4s ease;
+  }
+
+  /* ── Scrollbar ── */
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: #333330; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">Power BI · Phase 1</div>
+    <h1>Data Cleaning in Power Query</h1>
+  </div>
+
+  <div class="sidebar-section-label">Job Postings</div>
+  <div class="nav-item active" onclick="goTo(0)" id="nav-0">
+    <div class="nav-dot"></div> How to open Power Query
+  </div>
+  <div class="nav-item" onclick="goTo(1)" id="nav-1">
+    <div class="nav-dot"></div> Remove duplicate rows
+  </div>
+  <div class="nav-item" onclick="goTo(2)" id="nav-2">
+    <div class="nav-dot"></div> Trim whitespace
+  </div>
+  <div class="nav-item" onclick="goTo(3)" id="nav-3">
+    <div class="nav-dot"></div> Clean job_title
+  </div>
+  <div class="nav-item" onclick="goTo(4)" id="nav-4">
+    <div class="nav-dot"></div> Standardize work_setup
+  </div>
+  <div class="nav-item" onclick="goTo(5)" id="nav-5">
+    <div class="nav-dot"></div> Standardize employment_type
+  </div>
+  <div class="nav-item" onclick="goTo(6)" id="nav-6">
+    <div class="nav-dot"></div> Fix blank company & location
+  </div>
+  <div class="nav-item" onclick="goTo(7)" id="nav-7">
+    <div class="nav-dot"></div> Parse posted_date
+  </div>
+  <div class="nav-item" onclick="goTo(8)" id="nav-8">
+    <div class="nav-dot"></div> Parse salary → numbers
+  </div>
+  <div class="nav-item" onclick="goTo(9)" id="nav-9">
+    <div class="nav-dot"></div> Extract skills_raw
+  </div>
+
+  <div class="sidebar-section-label">Applications</div>
+  <div class="nav-item" onclick="goTo(10)" id="nav-10">
+    <div class="nav-dot"></div> Standardize gender
+  </div>
+  <div class="nav-item" onclick="goTo(11)" id="nav-11">
+    <div class="nav-dot"></div> Standardize education
+  </div>
+  <div class="nav-item" onclick="goTo(12)" id="nav-12">
+    <div class="nav-dot"></div> Fix blanks & parse dates
+  </div>
+  <div class="nav-item" onclick="goTo(13)" id="nav-13">
+    <div class="nav-dot"></div> Add age_band column
+  </div>
+
+  <div class="sidebar-section-label">Finish</div>
+  <div class="nav-item" onclick="goTo(14)" id="nav-14">
+    <div class="nav-dot"></div> Close & Apply checklist
+  </div>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:6.67%"></div></div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 0: Open Power Query -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card active" id="step-0">
+    <div class="step-eyebrow">Getting started</div>
+    <div class="step-title">How to open Power Query Editor</div>
+    <div class="step-desc">Power Query is where all data cleaning happens. You never touch the raw CSV directly — everything is done through steps that Power Query records automatically.</div>
+
+    <div class="substep open" id="ss-0-0">
+      <div class="substep-header" onclick="toggleSub('ss-0-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Load your CSV files into Power BI</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Home tab → Get Data</div>
+        <ol class="click-steps">
+          <li>Open Power BI Desktop. On the Home ribbon, click <strong>Get Data</strong>.</li>
+          <li>Choose <strong>Text/CSV</strong> from the list.</li>
+          <li>Browse to your <code>raw_job_postings.csv</code> file and click <strong>Open</strong>.</li>
+          <li>A preview window appears. Click <strong>Transform Data</strong> — not Load. This takes you directly into Power Query Editor.</li>
+          <li>Repeat for <code>raw_applications.csv</code>: Home → Get Data → Text/CSV.</li>
+        </ol>
+        <div class="note">⚡ Always click <strong>Transform Data</strong>, not Load. If you click Load by mistake, go to Home → Transform Data to open the editor afterwards.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-0-1">
+      <div class="substep-header" onclick="toggleSub('ss-0-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Get familiar with the Power Query layout</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li><strong>Queries pane (left)</strong> — lists your tables. You'll see <code>raw_job_postings</code> and <code>raw_applications</code>. Click one to work on it.</li>
+          <li><strong>Data preview (center)</strong> — shows your rows. Column headers have a type icon on the left (ABC = text, 123 = number, calendar = date).</li>
+          <li><strong>Applied Steps panel (right)</strong> — every cleaning action you take appears here as a named step. You can click any step to undo or inspect it.</li>
+          <li><strong>Ribbons (top)</strong> — Home, Transform, Add Column, View. Most cleaning is in Home and Transform.</li>
+        </ol>
+        <div class="note">💡 The Applied Steps panel is your safety net. If a step breaks something, just click the X next to it to delete it and try again.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-primary" onclick="goTo(1)">Next: Remove duplicates →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 1: Remove duplicates -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-1">
+    <div class="step-eyebrow">Job Postings · Step 1</div>
+    <div class="step-title">Remove duplicate rows</div>
+    <div class="step-desc">The data has 104 rows but only 100 unique job IDs — 4 rows are exact duplicates. We remove them by telling Power Query to keep only the first occurrence of each <code>job_id</code>.</div>
+
+    <div class="substep open" id="ss-1-0">
+      <div class="substep-header" onclick="toggleSub('ss-1-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Remove rows with duplicate job_id</div>
+        <div class="substep-meta">Home tab</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Home tab → Remove Rows → Remove Duplicates</div>
+        <ol class="click-steps">
+          <li>Make sure you are on the <code>raw_job_postings</code> query (click it in the left panel).</li>
+          <li>Click the <strong>job_id</strong> column header to select it. The column turns blue.</li>
+          <li>In the <strong>Home</strong> ribbon, click <strong>Remove Rows</strong> → <strong>Remove Duplicates</strong>.</li>
+          <li>Row count in the bottom bar should drop from 104 to 100.</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">Result</div>
+          <div style="font-size:13px; color:#555550;">JP0054 appeared twice → now appears once. Same for JP0046, JP0084, JP0071.</div>
+        </div>
+        <div class="note">⚠️ Power Query keeps the <em>first</em> occurrence and removes all later duplicates. Since rows are identical, this is fine.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(0)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(2)">Next: Trim whitespace →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 2: Trim whitespace -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-2">
+    <div class="step-eyebrow">Job Postings · Step 2</div>
+    <div class="step-title">Trim whitespace from all columns</div>
+    <div class="step-desc">Many columns have invisible trailing spaces — things like "Full-time " instead of "Full-time". These cause silent bugs where "Full-time" ≠ "Full-time " in filters. Trim removes them.</div>
+
+    <div class="substep open" id="ss-2-0">
+      <div class="substep-header" onclick="toggleSub('ss-2-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Select all columns, then Trim</div>
+        <div class="substep-meta">Transform tab</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Transform tab → Format → Trim</div>
+        <ol class="click-steps">
+          <li>Click the first column header (<strong>job_id</strong>).</li>
+          <li>Hold <strong>Shift</strong> and click the last column (<strong>job_description</strong>) to select all columns.</li>
+          <li>Go to the <strong>Transform</strong> tab in the ribbon.</li>
+          <li>Click <strong>Format</strong> → <strong>Trim</strong>.</li>
+        </ol>
+        <div class="note">💡 Do this for <strong>raw_applications</strong> too — select all its columns and Trim the same way. It's always safe to trim text columns.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Next: Clean job_title →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 3: Clean job_title -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-3">
+    <div class="step-eyebrow">Job Postings · Step 3</div>
+    <div class="step-title">Clean the job_title column</div>
+    <div class="step-desc">Titles have three problems: inconsistent casing (ALL CAPS), stray location keywords like "(Remote)" and "(Hybrid)" embedded in them, and urgency tags like "(Urgent)". We want clean titles like "Senior Data Analyst" for grouping later.</div>
+
+    <div class="substep open" id="ss-3-0">
+      <div class="substep-header" onclick="toggleSub('ss-3-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Fix casing with Capitalize Each Word</div>
+        <div class="substep-meta">Transform tab</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Transform tab → Format → Capitalize Each Word</div>
+        <ol class="click-steps">
+          <li>Click the <strong>job_title</strong> column header to select it.</li>
+          <li>Go to the <strong>Transform</strong> tab.</li>
+          <li>Click <strong>Format</strong> → <strong>Capitalize Each Word</strong>.</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">Before → After</div>
+          <div class="tag-row">
+            <span class="tag bad">BUSINESS INTELLIGENCE ANALYST (URGENT)</span>
+            <span class="tag arrow-label">→</span>
+            <span class="tag good">Business Intelligence Analyst (Urgent)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-3-1">
+      <div class="substep-header" onclick="toggleSub('ss-3-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Remove "(Remote)" from titles</div>
+        <div class="substep-meta">Transform tab → Replace Values</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Transform tab → Replace Values</div>
+        <ol class="click-steps">
+          <li>With <strong>job_title</strong> still selected, click <strong>Replace Values</strong> in the Transform tab.</li>
+          <li>In "Value to find" type: <code> (Remote)</code> (with a space before the bracket).</li>
+          <li>Leave "Replace with" empty.</li>
+          <li>Click <strong>OK</strong>.</li>
+          <li>Repeat for <code> (Urgent)</code>, <code> (Hybrid)</code>, <code> - Hybrid</code>, <code> - Remote</code>.</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">Before → After</div>
+          <div class="tag-row">
+            <span class="tag bad">Data Scientist (Remote)</span>
+            <span class="tag arrow-label">→</span>
+            <span class="tag good">Data Scientist</span>
+          </div>
+          <div class="tag-row" style="margin-top:6px">
+            <span class="tag bad">Senior Ai/Ml Engineer - Hybrid</span>
+            <span class="tag arrow-label">→</span>
+            <span class="tag good">Senior Ai/Ml Engineer</span>
+          </div>
+        </div>
+        <div class="note">💡 Each Replace Values action adds a separate step in your Applied Steps panel. That's fine and expected.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(4)">Next: work_setup →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 4: work_setup -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-4">
+    <div class="step-eyebrow">Job Postings · Step 4</div>
+    <div class="step-title">Standardize work_setup</div>
+    <div class="step-desc">Six different spellings exist for what are really only three values. We map everything to Remote, Hybrid, or Onsite using Replace Values.</div>
+
+    <div class="substep open" id="ss-4-0">
+      <div class="substep-header" onclick="toggleSub('ss-4-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Map all variants to 3 standard values</div>
+        <div class="substep-meta">Transform tab → Replace Values (×3)</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Click work_setup column → Transform → Replace Values</div>
+
+        <div class="result-preview" style="margin-bottom:12px;">
+          <div class="rp-label">What's in the data right now</div>
+          <div class="tag-row">
+            <span class="tag bad">WFH</span>
+            <span class="tag bad">remote</span>
+            <span class="tag bad">Remote</span>
+            <span class="tag bad">On-site</span>
+            <span class="tag bad">Onsite</span>
+            <span class="tag bad">Hybrid</span>
+          </div>
+        </div>
+
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">Do these Replace Values one at a time on the <strong>work_setup</strong> column:</p>
+        <table class="mini-table">
+          <tr><th>Value to find</th><th>Replace with</th></tr>
+          <tr><td class="cell-bad">WFH</td><td class="cell-good">Remote</td></tr>
+          <tr><td class="cell-bad">remote</td><td class="cell-good">Remote</td></tr>
+          <tr><td class="cell-bad">On-site</td><td class="cell-good">Onsite</td></tr>
+        </table>
+        <div class="note">💡 "Hybrid" and "Remote" (capital R) are already correct — no need to replace them. You only need 3 replacements total.</div>
+
+        <div class="result-preview" style="margin-top:12px;">
+          <div class="rp-label">After cleaning</div>
+          <div class="tag-row">
+            <span class="tag good">Remote</span>
+            <span class="tag good">Hybrid</span>
+            <span class="tag good">Onsite</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(3)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(5)">Next: employment_type →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 5: employment_type -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-5">
+    <div class="step-eyebrow">Job Postings · Step 5</div>
+    <div class="step-title">Standardize employment_type</div>
+    <div class="step-desc">Same idea as work_setup — different capitalizations and spellings for the same 3 values.</div>
+
+    <div class="substep open" id="ss-5-0">
+      <div class="substep-header" onclick="toggleSub('ss-5-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Map all variants to 3 standard values</div>
+        <div class="substep-meta">Transform tab → Replace Values (×3)</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Click employment_type column → Transform → Replace Values</div>
+        <table class="mini-table">
+          <tr><th>Value to find</th><th>Replace with</th></tr>
+          <tr><td class="cell-bad">Full Time</td><td class="cell-good">Full-time</td></tr>
+          <tr><td class="cell-bad">full-time</td><td class="cell-good">Full-time</td></tr>
+          <tr><td class="cell-bad">Full-time </td><td class="cell-good">Full-time</td></tr>
+        </table>
+        <div class="note">💡 "Permanent" and "Contract" are already clean. The third row has a trailing space — if you did the Trim step earlier, this may already be fixed. Check by filtering the column: click the dropdown arrow on the column header and see if "Full-time " (with space) still appears.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(4)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(6)">Next: blank company & location →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 6: Null blanks -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-6">
+    <div class="step-eyebrow">Job Postings · Step 6</div>
+    <div class="step-title">Replace blank company & location with null</div>
+    <div class="step-desc">A few rows have empty company or location cells. In Power BI, blank text ("") and null are different — null is the proper "no value" marker and works better with filters and visuals.</div>
+
+    <div class="substep open" id="ss-6-0">
+      <div class="substep-header" onclick="toggleSub('ss-6-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Replace empty string with null</div>
+        <div class="substep-meta">Transform tab → Replace Values</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Click company column → Transform → Replace Values</div>
+        <ol class="click-steps">
+          <li>Select the <strong>company</strong> column.</li>
+          <li>Click <strong>Replace Values</strong>.</li>
+          <li>"Value to find": leave it <strong>completely empty</strong> (don't type anything).</li>
+          <li>"Replace with": type <code>null</code> (lowercase).</li>
+          <li>Click <strong>OK</strong>.</li>
+          <li>Repeat the same steps for the <strong>location</strong> column.</li>
+        </ol>
+        <div class="note">⚠️ Make sure "Replace with" says exactly <code>null</code> in lowercase. Power Query will convert it to a proper null value, shown as italicised <em>null</em> in the preview.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(5)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(7)">Next: parse dates →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 7: Parse dates -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-7">
+    <div class="step-eyebrow">Job Postings · Step 7</div>
+    <div class="step-title">Parse posted_date into a real Date</div>
+    <div class="step-desc">The date column contains 4 different formats mixed together. Power Query can't auto-detect them all — we need a Custom Column formula that handles each format explicitly.</div>
+
+    <div class="substep open" id="ss-7-0">
+      <div class="substep-header" onclick="toggleSub('ss-7-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">See what formats exist in the data</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Format name</th><th>Example from data</th><th>Pattern</th></tr>
+          <tr><td>ISO</td><td class="cell-bad">2026-05-01</td><td>yyyy-MM-dd</td></tr>
+          <tr><td>US</td><td class="cell-bad">02/26/2026</td><td>MM/dd/yyyy</td></tr>
+          <tr><td>Long</td><td class="cell-bad">Feb 27, 2026</td><td>MMM d, yyyy</td></tr>
+          <tr><td>Short</td><td class="cell-bad">04-Jan-26</td><td>dd-MMM-yy</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-7-1">
+      <div class="substep-header" onclick="toggleSub('ss-7-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Add a Custom Column with the date formula</div>
+        <div class="substep-meta">Add Column tab → Custom Column</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Add Column tab → Custom Column</div>
+        <ol class="click-steps">
+          <li>Go to the <strong>Add Column</strong> tab in the ribbon.</li>
+          <li>Click <strong>Custom Column</strong>.</li>
+          <li>Name the new column: <code>posted_date_clean</code></li>
+          <li>Delete any existing formula and paste this:</li>
+        </ol>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="keyword">let</span> s = Text.Trim([posted_date]) <span class="keyword">in</span>
+  <span class="keyword">if</span> Text.Length(s) = 10 <span class="keyword">and</span> Text.At(s, 4) = <span class="string">"-"</span> <span class="keyword">and</span> Text.At(s, 7) = <span class="string">"-"</span>
+    <span class="keyword">then</span> Date.FromText(s)
+  <span class="keyword">else if</span> Text.Length(s) = 10 <span class="keyword">and</span> Text.At(s, 2) = <span class="string">"/"</span>
+    <span class="keyword">then</span> Date.FromText(s, [Format=<span class="string">"MM/dd/yyyy"</span>])
+  <span class="keyword">else if</span> Text.Contains(s, <span class="string">","</span>)
+    <span class="keyword">then</span> Date.FromText(s, [Format=<span class="string">"MMM d, yyyy"</span>])
+  <span class="keyword">else if</span> Text.Length(s) = 9 <span class="keyword">and</span> Text.At(s, 2) = <span class="string">"-"</span>
+    <span class="keyword">then</span> Date.FromText(s, [Format=<span class="string">"dd-MMM-yy"</span>])
+  <span class="keyword">else null</span>
+        </div>
+        <ol class="click-steps" style="counter-reset: cstep 4;">
+          <li>Click <strong>OK</strong>. A new column <code>posted_date_clean</code> appears on the right.</li>
+          <li>Click its column header → go to <strong>Transform</strong> tab → <strong>Data Type</strong> → <strong>Date</strong>.</li>
+          <li>Now right-click the original <strong>posted_date</strong> column → <strong>Remove</strong>.</li>
+          <li>Right-click <strong>posted_date_clean</strong> → <strong>Rename</strong> → type <code>posted_date</code>.</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">Result — all dates now look the same</div>
+          <div class="tag-row">
+            <span class="tag good">2026-01-04</span>
+            <span class="tag good">2026-02-26</span>
+            <span class="tag good">2026-04-06</span>
+          </div>
+        </div>
+        <div class="note">💡 If any row shows an <strong>Error</strong> in the new column, click that cell to see which date string caused it. You can add another <code>else if</code> line for that format.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(6)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(8)">Next: parse salary →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 8: Salary -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-8">
+    <div class="step-eyebrow">Job Postings · Step 8</div>
+    <div class="step-title">Parse salary into numbers</div>
+    <div class="step-desc">The salary column is the messiest. It has 4 free-text formats plus blanks and "Negotiable". We extract salary_min, salary_max, and a salary_midpoint as whole PHP numbers using Custom Column formulas.</div>
+
+    <div class="substep open" id="ss-8-0">
+      <div class="substep-header" onclick="toggleSub('ss-8-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Understand the 4 salary formats</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Format</th><th>Example</th><th>Logic</th></tr>
+          <tr><td>Range with "to"</td><td class="cell-bad">107,000 to 137,000 PHP per month</td><td>Split on " to "</td></tr>
+          <tr><td>₱K range</td><td class="cell-bad">₱115.0K - ₱147.0K /mo</td><td>Extract numbers × 1000</td></tr>
+          <tr><td>PHP dash range</td><td class="cell-bad">PHP 126,000-161,000 monthly</td><td>Split on "-"</td></tr>
+          <tr><td>Up to (max only)</td><td class="cell-bad">Up to ₱37,000/month</td><td>min = null, max = number</td></tr>
+          <tr><td>Blank / Negotiable</td><td class="cell-null">null / Negotiable</td><td>Both null</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-8-1">
+      <div class="substep-header" onclick="toggleSub('ss-8-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Add salary_min custom column</div>
+        <div class="substep-meta">Add Column → Custom Column</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Add Column tab → Custom Column → name it salary_min</div>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="keyword">let</span>
+  raw   = Text.Trim([salary]),
+  upper = Text.Upper(raw),
+  isK   = Text.Contains(raw, <span class="string">"K"</span>),
+  nums  = List.Select(
+            List.Transform(
+              Text.SplitAny(Text.Remove(raw, {<span class="string">"₱"</span>,<span class="string">"K"</span>,<span class="string">"k"</span>}), <span class="string">" ,to–-/"</span>),
+              each <span class="keyword">try</span> Number.FromText(Text.Remove(_, {<span class="string">","</span>})) <span class="keyword">otherwise null</span>
+            ),
+            each _ <> <span class="keyword">null</span> <span class="keyword">and</span> _ >= 10 <span class="keyword">and</span> _ <= 500
+          ),
+  converted = List.Transform(nums, each <span class="keyword">if</span> isK <span class="keyword">then</span> _ * 1000 <span class="keyword">else</span> _)
+<span class="keyword">in</span>
+  <span class="keyword">if</span> upper = <span class="string">"NEGOTIABLE"</span> <span class="keyword">or</span> raw = <span class="string">""</span>   <span class="keyword">then null</span>
+  <span class="keyword">else if</span> Text.StartsWith(upper, <span class="string">"UP TO"</span>)      <span class="keyword">then null</span>
+  <span class="keyword">else if</span> List.Count(converted) >= 2         <span class="keyword">then</span> List.Min(converted)
+  <span class="keyword">else if</span> List.Count(converted) = 1          <span class="keyword">then</span> List.First(converted)
+  <span class="keyword">else null</span>
+        </div>
+        <p style="font-size:13px;color:#555;margin-top:10px;">After clicking OK, change the column data type to <strong>Whole Number</strong>.</p>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-8-2">
+      <div class="substep-header" onclick="toggleSub('ss-8-2')">
+        <div class="substep-num">3</div>
+        <div class="substep-label">Add salary_max custom column</div>
+        <div class="substep-meta">Add Column → Custom Column</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Add Column tab → Custom Column → name it salary_max</div>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="keyword">let</span>
+  raw   = Text.Trim([salary]),
+  upper = Text.Upper(raw),
+  isK   = Text.Contains(raw, <span class="string">"K"</span>),
+  nums  = List.Select(
+            List.Transform(
+              Text.SplitAny(Text.Remove(raw, {<span class="string">"₱"</span>,<span class="string">"K"</span>,<span class="string">"k"</span>}), <span class="string">" ,to–-/"</span>),
+              each <span class="keyword">try</span> Number.FromText(Text.Remove(_, {<span class="string">","</span>})) <span class="keyword">otherwise null</span>
+            ),
+            each _ <> <span class="keyword">null</span> <span class="keyword">and</span> _ >= 10 <span class="keyword">and</span> _ <= 500
+          ),
+  converted = List.Transform(nums, each <span class="keyword">if</span> isK <span class="keyword">then</span> _ * 1000 <span class="keyword">else</span> _)
+<span class="keyword">in</span>
+  <span class="keyword">if</span> upper = <span class="string">"NEGOTIABLE"</span> <span class="keyword">or</span> raw = <span class="string">""</span>   <span class="keyword">then null</span>
+  <span class="keyword">else if</span> List.Count(converted) >= 1         <span class="keyword">then</span> List.Max(converted)
+  <span class="keyword">else null</span>
+        </div>
+        <p style="font-size:13px;color:#555;margin-top:10px;">Change data type to <strong>Whole Number</strong>.</p>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-8-3">
+      <div class="substep-header" onclick="toggleSub('ss-8-3')">
+        <div class="substep-num">4</div>
+        <div class="substep-label">Add salary_midpoint custom column</div>
+        <div class="substep-meta">Add Column → Custom Column</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Add Column tab → Custom Column → name it salary_midpoint</div>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="keyword">if</span> [salary_min] = <span class="keyword">null</span> <span class="keyword">and</span> [salary_max] &lt;&gt; <span class="keyword">null</span>
+  <span class="keyword">then</span> [salary_max]
+<span class="keyword">else if</span> [salary_min] &lt;&gt; <span class="keyword">null</span> <span class="keyword">and</span> [salary_max] &lt;&gt; <span class="keyword">null</span>
+  <span class="keyword">then</span> Number.RoundUp(([salary_min] + [salary_max]) / 2, 0)
+<span class="keyword">else null</span>
+        </div>
+        <p style="font-size:13px;color:#555;margin-top:10px;">Change data type to <strong>Whole Number</strong>. This column is what you'll use for median salary DAX measures later.</p>
+        <div class="result-preview" style="margin-top:12px;">
+          <div class="rp-label">Sample output</div>
+          <table class="mini-table">
+            <tr><th>salary (original)</th><th>salary_min</th><th>salary_max</th><th>salary_midpoint</th></tr>
+            <tr><td>₱115.0K - ₱147.0K /mo</td><td class="cell-good">115000</td><td class="cell-good">147000</td><td class="cell-good">131000</td></tr>
+            <tr><td>Up to ₱37,000/month</td><td class="cell-null">null</td><td class="cell-good">37000</td><td class="cell-good">37000</td></tr>
+            <tr><td>Negotiable</td><td class="cell-null">null</td><td class="cell-null">null</td><td class="cell-null">null</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(7)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(9)">Next: extract skills →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 9: Skills -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-9">
+    <div class="step-eyebrow">Job Postings · Step 9</div>
+    <div class="step-title">Extract skills_raw from job_description</div>
+    <div class="step-desc">Every job description follows the same pattern: "Responsibilities include working with X, Y, Z. The ideal candidate…" — we extract the skill list between those two markers.</div>
+
+    <div class="substep open" id="ss-9-0">
+      <div class="substep-header" onclick="toggleSub('ss-9-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Add skills_raw custom column</div>
+        <div class="substep-meta">Add Column → Custom Column</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Add Column tab → Custom Column → name it skills_raw</div>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="keyword">let</span>
+  desc   = [job_description],
+  marker = <span class="string">"Responsibilities include working with "</span>,
+  endTag = <span class="string">". The ideal"</span>,
+  startPos   = Text.PositionOf(desc, marker),
+  afterStart = Text.Middle(desc, startPos + Text.Length(marker)),
+  endPos     = Text.PositionOf(afterStart, endTag),
+  skillStr   = Text.Start(afterStart, endPos)
+<span class="keyword">in</span>
+  <span class="keyword">if</span> startPos >= 0 <span class="keyword">and</span> endPos > 0
+  <span class="keyword">then</span> skillStr
+  <span class="keyword">else null</span>
+        </div>
+        <div class="result-preview" style="margin-top:12px;">
+          <div class="rp-label">Sample output</div>
+          <table class="mini-table">
+            <tr><th>job_title</th><th>skills_raw</th></tr>
+            <tr><td>Data Analyst</td><td class="cell-good">Python, SQL, Power BI, Excel, Tableau</td></tr>
+            <tr><td>Data Engineer</td><td class="cell-good">Snowflake, ETL, Python, SQL, Spark, Azure</td></tr>
+            <tr><td>AI/ML Engineer</td><td class="cell-good">PyTorch, TensorFlow, Machine Learning, NLP, Python</td></tr>
+          </table>
+        </div>
+        <div class="note">💡 This comma-separated string will be split into a proper <strong>dim_skills</strong> table in Phase 2 during the modeling step — don't split it here.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(8)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(10)">Next: applications → gender →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 10: Gender -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-10">
+    <div class="step-eyebrow">Applications · Step 1</div>
+    <div class="step-title">Standardize gender</div>
+    <div class="step-desc">Switch to the <strong>raw_applications</strong> query in the left panel first. The gender column has 8 variants for 4 real values.</div>
+
+    <div class="substep open" id="ss-10-0">
+      <div class="substep-header" onclick="toggleSub('ss-10-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Replace all variants using Replace Values</div>
+        <div class="substep-meta">Transform tab → Replace Values (×4)</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Click gender column → Transform → Replace Values</div>
+        <table class="mini-table">
+          <tr><th>Value to find</th><th>Replace with</th></tr>
+          <tr><td class="cell-bad">M</td><td class="cell-good">Male</td></tr>
+          <tr><td class="cell-bad">male</td><td class="cell-good">Male</td></tr>
+          <tr><td class="cell-bad">F</td><td class="cell-good">Female</td></tr>
+          <tr><td class="cell-bad">female</td><td class="cell-good">Female</td></tr>
+        </table>
+        <div class="note">⚠️ Replace "M" before "Male" — otherwise "Male" becomes "Maleale". Order matters here. Check your Applied Steps to confirm the M → Male step comes before any Male-related step.</div>
+        <div class="result-preview" style="margin-top:12px;">
+          <div class="rp-label">After cleaning</div>
+          <div class="tag-row">
+            <span class="tag good">Male</span>
+            <span class="tag good">Female</span>
+            <span class="tag good">Non-binary</span>
+            <span class="tag good">Prefer not to say</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(9)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(11)">Next: education →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 11: Education -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-11">
+    <div class="step-eyebrow">Applications · Step 2</div>
+    <div class="step-title">Standardize education</div>
+    <div class="step-desc">15 different spellings for 5 education levels. We map them all to one standard label per level using Replace Values.</div>
+
+    <div class="substep open" id="ss-11-0">
+      <div class="substep-header" onclick="toggleSub('ss-11-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Map all variants to 5 standard levels</div>
+        <div class="substep-meta">Transform tab → Replace Values (×10)</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Click education column → Transform → Replace Values</div>
+        <table class="mini-table">
+          <tr><th>Value to find</th><th>Replace with</th></tr>
+          <tr><td class="cell-bad">Senior High</td><td class="cell-good">High School</td></tr>
+          <tr><td class="cell-bad">HS Graduate</td><td class="cell-good">High School</td></tr>
+          <tr><td class="cell-bad">High School Graduate</td><td class="cell-good">High School</td></tr>
+          <tr><td class="cell-bad">Associate Degree</td><td class="cell-good">Associate</td></tr>
+          <tr><td class="cell-bad">Bachelor</td><td class="cell-good">Bachelor's</td></tr>
+          <tr><td class="cell-bad">Bachelor's Degree</td><td class="cell-good">Bachelor's</td></tr>
+          <tr><td class="cell-bad">Bachelors</td><td class="cell-good">Bachelor's</td></tr>
+          <tr><td class="cell-bad">BS</td><td class="cell-good">Bachelor's</td></tr>
+          <tr><td class="cell-bad">B.S.</td><td class="cell-good">Bachelor's</td></tr>
+          <tr><td class="cell-bad">Master</td><td class="cell-good">Master's</td></tr>
+          <tr><td class="cell-bad">Master's Degree</td><td class="cell-good">Master's</td></tr>
+          <tr><td class="cell-bad">MS</td><td class="cell-good">Master's</td></tr>
+          <tr><td class="cell-bad">M.S.</td><td class="cell-good">Master's</td></tr>
+        </table>
+        <div class="note">💡 "Associate" and "Vocational" are already clean — no change needed. Do the longer strings first (e.g. "Bachelor's Degree" before "Bachelor") to avoid partial matches.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(10)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(12)">Next: blanks & dates →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 12: Blanks + dates in applications -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-12">
+    <div class="step-eyebrow">Applications · Step 3</div>
+    <div class="step-title">Fix blanks and parse date_applied</div>
+    <div class="step-desc">Null out blank age, city, and interview_score cells, then parse the mixed date formats — same 4 formats as the job postings table.</div>
+
+    <div class="substep open" id="ss-12-0">
+      <div class="substep-header" onclick="toggleSub('ss-12-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Replace blank age, city, interview_score with null</div>
+        <div class="substep-meta">Transform → Replace Values (×3)</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px;color:#555;margin-bottom:10px;">For each column below: select the column → Replace Values → find empty → replace with <code>null</code>.</p>
+        <div class="tag-row">
+          <span class="tag bad">age</span>
+          <span class="tag bad">city</span>
+          <span class="tag bad">interview_score</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-12-1">
+      <div class="substep-header" onclick="toggleSub('ss-12-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Parse date_applied using the same formula</div>
+        <div class="substep-meta">Add Column → Custom Column</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Add Column → Custom Column → name it date_applied_clean</div>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="keyword">let</span> s = Text.Trim([date_applied]) <span class="keyword">in</span>
+  <span class="keyword">if</span> Text.Length(s) = 10 <span class="keyword">and</span> Text.At(s, 4) = <span class="string">"-"</span> <span class="keyword">and</span> Text.At(s, 7) = <span class="string">"-"</span>
+    <span class="keyword">then</span> Date.FromText(s)
+  <span class="keyword">else if</span> Text.Length(s) = 10 <span class="keyword">and</span> Text.At(s, 2) = <span class="string">"/"</span>
+    <span class="keyword">then</span> Date.FromText(s, [Format=<span class="string">"MM/dd/yyyy"</span>])
+  <span class="keyword">else if</span> Text.Contains(s, <span class="string">","</span>)
+    <span class="keyword">then</span> Date.FromText(s, [Format=<span class="string">"MMM d, yyyy"</span>])
+  <span class="keyword">else if</span> Text.Length(s) = 9 <span class="keyword">and</span> Text.At(s, 2) = <span class="string">"-"</span>
+    <span class="keyword">then</span> Date.FromText(s, [Format=<span class="string">"dd-MMM-yy"</span>])
+  <span class="keyword">else null</span>
+        </div>
+        <ol class="click-steps" style="counter-reset:cstep 0; margin-top:10px;">
+          <li>Set the new column data type to <strong>Date</strong>.</li>
+          <li>Remove the original <code>date_applied</code> column, rename <code>date_applied_clean</code> → <code>date_applied</code>.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(11)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(13)">Next: add age_band →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 13: age_band -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-13">
+    <div class="step-eyebrow">Applications · Step 4</div>
+    <div class="step-title">Add age_band column</div>
+    <div class="step-desc">Raw ages are hard to compare in visuals. Grouping them into bands (Under 25, 25–34, etc.) makes the fairness analysis page much more readable.</div>
+
+    <div class="substep open" id="ss-13-0">
+      <div class="substep-header" onclick="toggleSub('ss-13-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Add age_band with a Custom Column</div>
+        <div class="substep-meta">Add Column → Custom Column</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span class="arrow">▶</span> Add Column tab → Custom Column → name it age_band</div>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="keyword">if</span> [age] = <span class="keyword">null</span>   <span class="keyword">then null</span>
+<span class="keyword">else if</span> [age] &lt; 25  <span class="keyword">then</span> <span class="string">"Under 25"</span>
+<span class="keyword">else if</span> [age] &lt; 35  <span class="keyword">then</span> <span class="string">"25–34"</span>
+<span class="keyword">else if</span> [age] &lt; 45  <span class="keyword">then</span> <span class="string">"35–44"</span>
+<span class="keyword">else</span>                      <span class="string">"45+"</span>
+        </div>
+        <div class="note">💡 Make sure the <code>age</code> column is set to <strong>Whole Number</strong> type before adding this column, otherwise the comparison operators won't work correctly.</div>
+        <div class="result-preview" style="margin-top:12px;">
+          <div class="rp-label">Sample output</div>
+          <table class="mini-table">
+            <tr><th>age</th><th>age_band</th></tr>
+            <tr><td>23</td><td class="cell-good">Under 25</td></tr>
+            <tr><td>31</td><td class="cell-good">25–34</td></tr>
+            <tr><td>45</td><td class="cell-good">45+</td></tr>
+            <tr><td class="cell-null">null</td><td class="cell-null">null</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(12)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(14)">Next: Close & Apply →</button>
+    </div>
+  </div>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- STEP 14: Close & Apply checklist -->
+  <!-- ─────────────────────────────────────────── -->
+  <div class="step-card" id="step-14">
+    <div class="step-eyebrow">Finish</div>
+    <div class="step-title">Close & Apply checklist</div>
+    <div class="step-desc">Before you click Close & Apply, do a final spot-check. Each item below should pass — if anything looks wrong, click that step in the Applied Steps panel to fix it.</div>
+
+    <div class="substep open" id="ss-14-0">
+      <div class="substep-header" onclick="toggleSub('ss-14-0')">
+        <div class="substep-num">✓</div>
+        <div class="substep-label">raw_job_postings checklist</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Check</th><th>Expected result</th></tr>
+          <tr><td>Row count</td><td class="cell-good">100 rows (down from 104)</td></tr>
+          <tr><td>work_setup distinct values</td><td class="cell-good">Remote, Hybrid, Onsite only</td></tr>
+          <tr><td>employment_type distinct values</td><td class="cell-good">Full-time, Permanent, Contract only</td></tr>
+          <tr><td>posted_date column icon</td><td class="cell-good">Calendar icon (Date type)</td></tr>
+          <tr><td>salary_min / salary_max</td><td class="cell-good">Numbers between 10,000–500,000 or null</td></tr>
+          <tr><td>skills_raw sample</td><td class="cell-good">Comma-separated list, e.g. "SQL, Python, Power BI"</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-14-1">
+      <div class="substep-header" onclick="toggleSub('ss-14-1')">
+        <div class="substep-num">✓</div>
+        <div class="substep-label">raw_applications checklist</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Check</th><th>Expected result</th></tr>
+          <tr><td>gender distinct values</td><td class="cell-good">Male, Female, Non-binary, Prefer not to say, null</td></tr>
+          <tr><td>education distinct values</td><td class="cell-good">High School, Vocational, Associate, Bachelor's, Master's</td></tr>
+          <tr><td>date_applied column icon</td><td class="cell-good">Calendar icon (Date type)</td></tr>
+          <tr><td>age_band distinct values</td><td class="cell-good">Under 25, 25–34, 35–44, 45+, null</td></tr>
+          <tr><td>interview_score type</td><td class="cell-good">Decimal Number, some nulls</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-14-2">
+      <div class="substep-header" onclick="toggleSub('ss-14-2')">
+        <div class="substep-num">→</div>
+        <div class="substep-label">How to do the spot-check (filter trick)</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>In the Power Query preview, click the <strong>dropdown arrow</strong> on any column header.</li>
+          <li>A list of all distinct values in that column appears — this is the fastest way to verify your cleaning worked.</li>
+          <li>If you see unexpected values still there, click the X on the relevant Applied Step and redo it.</li>
+          <li>Once everything looks clean: <strong>Home tab → Close & Apply</strong>.</li>
+        </ol>
+        <div class="note" style="margin-top:16px;">🎉 <strong>Phase 1 complete.</strong> Both tables are now loaded into Power BI's data model. The next step is Phase 2 — building the star schema, creating dim_skills from the skills_raw column, and setting up relationships in Model view.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(13)">← Back</button>
+      <button class="btn btn-primary" disabled>Phase 2: Data Modeling →</button>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+  const TOTAL = 15;
+  let current = 0;
+
+  function goTo(idx) {
+    document.getElementById('step-' + current).classList.remove('active');
+    document.getElementById('nav-' + current).classList.remove('active');
+    document.getElementById('nav-' + current).classList.add('done');
+    current = idx;
+    document.getElementById('step-' + current).classList.add('active');
+    document.getElementById('nav-' + current).classList.add('active');
+    document.getElementById('nav-' + current).classList.remove('done');
+    document.getElementById('progress').style.width = (((idx + 1) / TOTAL) * 100).toFixed(1) + '%';
+    document.querySelector('.main').scrollTop = 0;
+    window.scrollTo(0, 0);
+  }
+
+  function toggleSub(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  function copyCode(btn) {
+    const box = btn.parentElement;
+    const text = box.innerText.replace('Copy', '').replace('Copied!', '').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
