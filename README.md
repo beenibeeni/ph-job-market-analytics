@@ -54,7 +54,7 @@ The raw data had several real-world messiness issues that required careful handl
 - **Duplicate rows** — 4 duplicate `job_id` rows removed
 
 Full cleaning documentation with click-by-click instructions:
-👉 **[Open the Power Query Cleaning Guide](https://beenibeeni.github.io/Power-BI-Documentation-and-Guide/PowerQuery_Cleaning_Guide.html)**
+👉 **[Open the Power Query Cleaning Guide](https://beenibeeni.github.io/ph-job-market-analytics/PowerQuery_Cleaning_Guide.html)**
 
 ---
 
