@@ -84,8 +84,7 @@ Star schema with:
 
 Hi, I'm **Jannelle** — a data analyst based in the Philippines. This is my first end-to-end Power BI portfolio project. I'm documenting every phase as I build it, including the reasoning behind each decision.
 
-Connect with me on [LinkedIn](https://www.linkedin.com/in/jnnllcandelaria/) ← *(replace with your actual LinkedIn URL)*
-
+Connect with me on [LinkedIn](https://www.linkedin.com/in/jnnllcandelaria/)
 ---
 
 *Data is synthetic and generated for learning purposes. Company names are fictional Filipino startup-style names. No real applicant PII is included.*
