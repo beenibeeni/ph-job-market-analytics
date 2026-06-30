@@ -82,7 +82,7 @@ Star schema with:
 
 ## About
 
-Hi, I'm **Jannelle** — an aspiring data analyst based in the Philippines. This is my first end-to-end Power BI portfolio project. I'm documenting every phase as I build it, including the reasoning behind each decision.
+Hi, I'm **Jannelle** — a data analyst based in the Philippines. This is my first end-to-end Power BI portfolio project. I'm documenting every phase as I build it, including the reasoning behind each decision.
 
 Connect with me on [LinkedIn](https://www.linkedin.com/in/jnnllcandelaria/) ← *(replace with your actual LinkedIn URL)*
 
