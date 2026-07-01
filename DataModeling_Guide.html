@@ -332,6 +332,44 @@
       </div>
     </div>
 
+    <div class="substep" id="ss-2-2">
+      <div class="substep-header" onclick="toggleSub('ss-2-2')">
+        <div class="substep-num">3</div>
+        <div class="substep-label">Primary keys and foreign keys — how to identify them</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">Keys are what make relationships work in Power BI. Understanding them tells you exactly which column to drag to which when setting up relationships in Model view.</p>
+
+        <p style="font-size:13px; font-weight:600; color:#333; margin-bottom:6px;">Primary key — uniquely identifies every row in a table</p>
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">No two rows can share the same value, and no row can be blank. Quick test: use Column Distribution in Power Query — if "distinct" and "unique" both equal the total row count, every value appears exactly once. That's your primary key.</p>
+
+        <p style="font-size:13px; font-weight:600; color:#333; margin-bottom:6px;">Foreign key — references the primary key of another table</p>
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">It doesn't have to be unique — it usually repeats a lot, because many rows in the child table point to the same parent row. Look for columns that share the same name and data type across two tables — that naming match almost always signals a foreign key.</p>
+
+        <table class="mini-table">
+          <tr><th>Table</th><th>Primary key</th><th>Why it's unique</th></tr>
+          <tr><td>dim_jobs</td><td class="cell-good">job_id</td><td>JP0001, JP0002 — each posting has one ID, never repeats</td></tr>
+          <tr><td>dim_skills</td><td class="cell-good">skill_name</td><td>SQL, Python, Power BI — each skill listed once</td></tr>
+          <tr><td>dim_date</td><td class="cell-good">Date</td><td>Each calendar date appears exactly once</td></tr>
+          <tr><td>fact_applications</td><td class="cell-good">application_id</td><td>APP00001, APP00002 — each application has one ID</td></tr>
+          <tr><td>bridge_job_skills</td><td class="cell-good">job_id + skill_name</td><td>Neither alone is unique — the combination is (composite key)</td></tr>
+        </table>
+
+        <p style="font-size:13px; font-weight:600; color:#333; margin: 14px 0 6px;">Foreign keys in your model</p>
+        <table class="mini-table">
+          <tr><th>Table · column</th><th>Points to</th><th>Meaning</th></tr>
+          <tr><td>fact_applications · <strong>job_id</strong></td><td>dim_jobs · job_id</td><td>Which job was applied to</td></tr>
+          <tr><td>fact_applications · <strong>date_applied</strong></td><td>dim_date · Date</td><td>When the application was submitted</td></tr>
+          <tr><td>bridge_job_skills · <strong>job_id</strong></td><td>dim_jobs · job_id</td><td>Which job this skill belongs to</td></tr>
+          <tr><td>bridge_job_skills · <strong>skill_name</strong></td><td>dim_skills · skill_name</td><td>Which skill this row refers to</td></tr>
+        </table>
+
+        <div class="note" style="margin-top:14px;">⚠️ <strong>Referential integrity:</strong> every foreign key value must exist in the primary key table. If fact_applications has a job_id of JP0099 but dim_jobs has no JP0099 row, that application becomes an orphan — it won't appear correctly in visuals. In your cleaned dataset this shouldn't be an issue, but in real-world data it's worth checking. In Power Query: merge the two tables on job_id with a Left Outer join, then filter for rows where dim_jobs columns are null — those are the orphans.</div>
+        <div class="note-blue" style="margin-top:10px;">💡 <strong>The 1-to-many rule:</strong> the primary key always sits on the "one" side (dimension), and the foreign key sits on the "many" side (fact or bridge). One job in dim_jobs → many applications in fact_applications. Power BI uses this direction to filter correctly: a slicer on work_setup (dim) filters down into applications (fact), never the other way around.</div>
+      </div>
+    </div>
+
     <div class="nav-btns">
       <button class="btn btn-secondary" onclick="goTo(1)">← Back</button>
       <button class="btn btn-primary" onclick="goTo(3)">Next: Create dim_jobs →</button>
@@ -393,17 +431,20 @@
     <div class="substep open" id="ss-4-0">
       <div class="substep-header" onclick="toggleSub('ss-4-0')">
         <div class="substep-num">1</div>
-        <div class="substep-label">Wait — add skills_raw back before removing it</div>
+        <div class="substep-label">Duplicate dim_jobs before removing any columns</div>
         <div class="substep-chevron">▼</div>
       </div>
       <div class="substep-body">
-        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">Before you remove skills_raw from dim_jobs in Step 3, you need to first create a <strong>reference query</strong> from the original raw_job_postings that still has skills_raw. Here's the correct order:</p>
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">You need to create dim_skills and bridge_job_skills from dim_jobs <strong>before</strong> removing skills_raw — because once skills_raw is gone from dim_jobs, any query based on it won't have it either. The key is using <strong>Duplicate</strong>, not Reference.</p>
+        <div class="note" style="margin-bottom:12px;">⚠️ <strong>Reference vs Duplicate:</strong> A Reference is a live link — it always reflects dim_jobs as it currently stands, including any columns you've already removed. A Duplicate takes an independent snapshot at that moment. For this task you need Duplicate, so the copy captures skills_raw before it's removed.</div>
         <ol class="click-steps">
-          <li>In the Queries pane, right-click <strong>dim_jobs</strong> (before removing skills_raw) → click <strong>Reference</strong>. A new query appears called "dim_jobs (2)".</li>
-          <li>Rename this new query to <code>dim_skills</code>.</li>
-          <li>Now go back to <strong>dim_jobs</strong> and remove skills_raw and job_description (as in step 3).</li>
+          <li>In Power Query, make sure you are on the <strong>dim_jobs</strong> query and have <strong>not yet</strong> removed skills_raw or job_description.</li>
+          <li>Right-click <strong>dim_jobs</strong> in the Queries pane → click <strong>Duplicate</strong>. A new query appears called "dim_jobs (2)".</li>
+          <li>Rename it to <code>dim_skills</code>.</li>
+          <li>Right-click <strong>dim_jobs</strong> again → <strong>Duplicate</strong> → rename this one to <code>bridge_job_skills</code>.</li>
+          <li>Now go back to <strong>dim_jobs</strong> and remove skills_raw and job_description (Step 3 above). The two duplicates are independent — removing columns from dim_jobs does not affect them.</li>
         </ol>
-        <div class="note-blue">💡 A Reference query is a live link — it always starts from whatever dim_jobs currently looks like after all its steps, so you don't need to re-apply any cleaning.</div>
+        <div class="note-blue">💡 After this you should have three queries in the left panel: dim_jobs (clean, no skills columns), dim_skills (still has skills_raw), and bridge_job_skills (still has skills_raw). The next substeps will trim each duplicate down to only what it needs.</div>
       </div>
     </div>
 
@@ -501,16 +542,17 @@
     <div class="substep open" id="ss-5-0">
       <div class="substep-header" onclick="toggleSub('ss-5-0')">
         <div class="substep-num">1</div>
-        <div class="substep-label">Create another reference from dim_jobs</div>
+        <div class="substep-label">bridge_job_skills already exists — just trim it</div>
         <div class="substep-chevron">▼</div>
       </div>
       <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">If you followed the Duplicate steps in dim_skills Step 1, you already have a <code>bridge_job_skills</code> query in the left panel with all columns intact including skills_raw. You just need to trim it down to the two columns you need.</p>
         <ol class="click-steps">
-          <li>In the Queries pane, right-click <strong>dim_jobs</strong> → <strong>Reference</strong>.</li>
-          <li>Rename the new query to <code>bridge_job_skills</code>.</li>
-          <li>Select <strong>job_id</strong> and <strong>skills_raw</strong>, then right-click → <strong>Remove Other Columns</strong>.</li>
+          <li>Click on <strong>bridge_job_skills</strong> in the Queries pane.</li>
+          <li>Click the <strong>job_id</strong> column header, hold Ctrl and click <strong>skills_raw</strong>.</li>
+          <li>Right-click → <strong>Remove Other Columns</strong> to keep only those two.</li>
         </ol>
-        <div class="note">⚠️ Wait — dim_jobs no longer has skills_raw if you already removed it. If that's the case, right-click the original source before the remove step. Check your Applied Steps in dim_jobs — you can temporarily move the "Remove Columns" step to after you create this reference, then move it back.</div>
+        <div class="note-blue">💡 If you haven't created bridge_job_skills yet, go back to dim_jobs → right-click → Duplicate → rename to bridge_job_skills. Make sure dim_jobs still has skills_raw when you duplicate — if you already removed it, you'll need to temporarily delete that "Removed Columns" step from dim_jobs's Applied Steps, duplicate, then re-add it.</div>
       </div>
     </div>
 
