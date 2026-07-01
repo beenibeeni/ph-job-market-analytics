@@ -260,6 +260,26 @@
       </div>
     </div>
 
+    <div class="substep" id="ss-1-2">
+      <div class="substep-header" onclick="toggleSub('ss-1-2')">
+        <div class="substep-num">3</div>
+        <div class="substep-label">The 4-test framework — apply this to any table</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:14px;">These four questions work as a cumulative vote. If most answers point to "fact", it's a fact table. Rarely do you get a split result.</p>
+        <table class="mini-table">
+          <tr><th>Test</th><th>Question</th><th>Yes →</th><th>No →</th></tr>
+          <tr><td><strong>1. The event test</strong></td><td>Did this row record something that <em>happened</em>?</td><td class="cell-good">Fact</td><td class="cell-bad">Dimension</td></tr>
+          <tr><td><strong>2. The timestamp test</strong></td><td>Does it have a date or time column?</td><td class="cell-good">Probably fact</td><td class="cell-bad">Probably dim</td></tr>
+          <tr><td><strong>3. The measure test</strong></td><td>Would you ever sum, count, or average rows from it?</td><td class="cell-good">Fact</td><td class="cell-bad">Dimension</td></tr>
+          <tr><td><strong>4. The growth test</strong></td><td>Does it grow with every new event?</td><td class="cell-good">Fact</td><td class="cell-bad">Dimension</td></tr>
+        </table>
+        <div class="note" style="margin-top:14px;">⚠️ <strong>The tricky case — raw_job_postings.</strong> It has a date (posted_date), which makes it feel like a fact. But run the tests: it doesn't record a transaction, you filter by it rather than measure it, and it grows slowly. Three out of four point to dimension. The date column alone doesn't make something a fact table — the question is whether the date marks a <em>transaction</em> or just <em>when something started existing</em>. A job posting's date is the second kind.</div>
+        <div class="note-blue" style="margin-top:10px;">💡 The same table can be a fact in one project and a dimension in another — it depends on what question your dashboard is answering. If you were building a dashboard purely about job posting activity with no applications data, job_postings could be your fact. But here, applications are the events and postings are the context. That makes applications the fact.</div>
+      </div>
+    </div>
+
     <div class="nav-btns">
       <button class="btn btn-secondary" onclick="goTo(0)">← Back</button>
       <button class="btn btn-primary" onclick="goTo(2)">Next: Your model design →</button>
