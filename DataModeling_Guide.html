@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 2 — Data Modeling Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; font-size: 15px; line-height: 1.6; }
+  .shell { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { width: 260px; min-width: 260px; background: #1e1e1c; color: #c8c6be; position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; }
+  .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid #333330; }
+  .sidebar-header .logo { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6c6b64; margin-bottom: 4px; }
+  .sidebar-header .phase { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #4a8fa8; margin-bottom: 6px; }
+  .sidebar-header h1 { font-size: 15px; font-weight: 600; color: #f0ede6; line-height: 1.3; }
+  .sidebar-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #4a4a44; padding: 20px 20px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; border-left: 3px solid transparent; transition: background 0.15s, border-color 0.15s; color: #8a8880; font-size: 13.5px; }
+  .nav-item:hover { background: #2a2a27; color: #d0cec6; }
+  .nav-item.active { background: #2e2e2b; border-left-color: #4a8fa8; color: #f0ede6; }
+  .nav-item.done { color: #7ab897; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: #4a4a44; flex-shrink: 0; }
+  .nav-item.active .nav-dot { background: #4a8fa8; }
+  .nav-item.done .nav-dot { background: #3ab57a; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: #333330; border-radius: 2px; }
+
+  /* Main */
+  .main { flex: 1; padding: 40px 48px; max-width: 860px; }
+  .progress-bar { height: 3px; background: #e4e2db; margin-bottom: 32px; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #4a8fa8; border-radius: 2px; transition: width 0.4s ease; }
+
+  /* Step cards */
+  .step-card { display: none; animation: fadeIn 0.2s ease; }
+  .step-card.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .step-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #4a8fa8; margin-bottom: 8px; }
+  .step-title { font-size: 26px; font-weight: 700; color: #1a1a18; line-height: 1.2; margin-bottom: 10px; }
+  .step-desc { font-size: 15px; color: #555550; margin-bottom: 28px; max-width: 620px; line-height: 1.65; }
+
+  /* Substeps */
+  .substep { background: #fff; border: 1px solid #e4e2db; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+  .substep-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; cursor: pointer; user-select: none; }
+  .substep-header:hover { background: #faf9f6; }
+  .substep-num { width: 28px; height: 28px; border-radius: 50%; background: #f0ede6; color: #888880; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .substep.open .substep-num { background: #dff0f7; color: #4a8fa8; }
+  .substep-label { font-weight: 600; font-size: 14px; flex: 1; }
+  .substep-meta { font-size: 12px; color: #aaa8a0; }
+  .substep-chevron { font-size: 12px; color: #aaa8a0; transition: transform 0.2s; }
+  .substep.open .substep-chevron { transform: rotate(180deg); }
+  .substep-body { display: none; padding: 0 20px 20px; border-top: 1px solid #f0ede6; }
+  .substep.open .substep-body { display: block; }
+
+  /* Components */
+  .where { display: inline-flex; align-items: center; gap: 6px; background: #dff0f7; color: #1a5f7a; border: 1px solid #a8d4e6; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; margin: 14px 0 10px; }
+  .click-steps { list-style: none; counter-reset: cstep; margin: 8px 0; }
+  .click-steps li { counter-increment: cstep; display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f5f4f0; font-size: 13.5px; line-height: 1.5; color: #333330; align-items: flex-start; }
+  .click-steps li:last-child { border-bottom: none; }
+  .click-steps li::before { content: counter(cstep); width: 22px; height: 22px; border-radius: 50%; background: #1e1e1c; color: #f0ede6; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .formula-box { background: #1e1e1c; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12.5px; color: #c8c6be; line-height: 1.7; overflow-x: auto; position: relative; }
+  .formula-box .kw { color: #4a8fa8; }
+  .formula-box .str { color: #98c379; }
+  .formula-box .cmt { color: #555550; font-style: italic; }
+  .copy-btn { position: absolute; top: 10px; right: 10px; background: #333330; border: none; color: #888880; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: background 0.15s; }
+  .copy-btn:hover { background: #444440; color: #f0ede6; }
+  .copy-btn.copied { background: #1a3a2a; color: #3ab57a; }
+  .note { background: #fff8e6; border-left: 3px solid #f0a500; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #6a5010; margin: 12px 0; line-height: 1.5; }
+  .note-blue { background: #e8f4f8; border-left: 3px solid #4a8fa8; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #1a4f6a; margin: 12px 0; line-height: 1.5; }
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; }
+  .mini-table th { background: #1e1e1c; color: #c8c6be; padding: 7px 12px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mini-table td { padding: 7px 12px; border-bottom: 1px solid #f0ede6; }
+  .mini-table tr:last-child td { border-bottom: none; }
+  .mini-table tr:nth-child(even) td { background: #faf9f6; }
+  .cell-good { color: #1a6640; font-weight: 600; }
+  .cell-bad { color: #a83232; font-weight: 600; }
+  .cell-null { color: #aaa8a0; font-style: italic; }
+  .tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .tag-fact { background: #dff0f7; color: #1a5f7a; border: 1px solid #a8d4e6; }
+  .tag-dim { background: #e2f5ec; color: #1a6640; border: 1px solid #b0dfc4; }
+  .tag-bridge { background: #fff3d0; color: #8a5a00; border: 1px solid #f0d070; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+  .result-preview { background: #f5f4f0; border: 1px solid #e4e2db; border-radius: 8px; padding: 14px 16px; margin-top: 12px; }
+  .result-preview .rp-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #888880; margin-bottom: 10px; }
+
+  /* Schema diagram */
+  .schema-diagram { background: #1e1e1c; border-radius: 10px; padding: 20px; margin: 16px 0; }
+  .schema-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .schema-table { border-radius: 8px; padding: 10px 14px; min-width: 130px; text-align: center; }
+  .schema-table.fact { background: #1a3a4a; border: 1px solid #4a8fa8; }
+  .schema-table.dim { background: #1a3a28; border: 1px solid #3ab57a; }
+  .schema-table.bridge { background: #3a3010; border: 1px solid #f0a500; }
+  .schema-table .tname { font-size: 12px; font-weight: 700; color: #f0ede6; margin-bottom: 4px; }
+  .schema-table .tcols { font-size: 11px; color: #888880; line-height: 1.6; }
+  .schema-table .ttype { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .schema-table.fact .ttype { color: #4a8fa8; }
+  .schema-table.dim .ttype { color: #3ab57a; }
+  .schema-table.bridge .ttype { color: #f0a500; }
+  .schema-arrow { color: #555550; font-size: 18px; }
+
+  /* Nav buttons */
+  .nav-btns { display: flex; gap: 12px; margin-top: 36px; padding-top: 24px; border-top: 1px solid #e4e2db; }
+  .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: background 0.15s, transform 0.1s; }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #1e1e1c; color: #f0ede6; }
+  .btn-primary:hover { background: #333330; }
+  .btn-secondary { background: #fff; color: #555550; border: 1px solid #d8d6ce; }
+  .btn-secondary:hover { background: #f5f4f0; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">Power BI · Portfolio Project</div>
+    <div class="phase">Phase 2</div>
+    <h1>Data Modeling</h1>
+  </div>
+
+  <div class="sidebar-section-label">Understand First</div>
+  <div class="nav-item active" onclick="goTo(0)" id="nav-0"><div class="nav-dot"></div> What is a star schema?</div>
+  <div class="nav-item" onclick="goTo(1)" id="nav-1"><div class="nav-dot"></div> Fact vs dimension tables</div>
+  <div class="nav-item" onclick="goTo(2)" id="nav-2"><div class="nav-dot"></div> Your model design</div>
+
+  <div class="sidebar-section-label">Build the Model</div>
+  <div class="nav-item" onclick="goTo(3)" id="nav-3"><div class="nav-dot"></div> Create dim_jobs</div>
+  <div class="nav-item" onclick="goTo(4)" id="nav-4"><div class="nav-dot"></div> Create dim_skills</div>
+  <div class="nav-item" onclick="goTo(5)" id="nav-5"><div class="nav-dot"></div> Create bridge_job_skills</div>
+  <div class="nav-item" onclick="goTo(6)" id="nav-6"><div class="nav-dot"></div> Create dim_date</div>
+  <div class="nav-item" onclick="goTo(7)" id="nav-7"><div class="nav-dot"></div> Rename fact table</div>
+
+  <div class="sidebar-section-label">Connect Everything</div>
+  <div class="nav-item" onclick="goTo(8)" id="nav-8"><div class="nav-dot"></div> Open Model view</div>
+  <div class="nav-item" onclick="goTo(9)" id="nav-9"><div class="nav-dot"></div> Set up relationships</div>
+  <div class="nav-item" onclick="goTo(10)" id="nav-10"><div class="nav-dot"></div> Validate the model</div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:9%"></div></div>
+
+  <!-- STEP 0: What is a star schema -->
+  <div class="step-card active" id="step-0">
+    <div class="step-eyebrow">Understand first · Concept 1</div>
+    <div class="step-title">What is a star schema?</div>
+    <div class="step-desc">A star schema is a way of organizing your tables so that Power BI can answer questions quickly and correctly. It's called a "star" because of how it looks in a diagram — one central table in the middle, with supporting tables branching out around it like a star.</div>
+
+    <div class="substep open" id="ss-0-0">
+      <div class="substep-header" onclick="toggleSub('ss-0-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">The real-world analogy</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">Think of a supermarket receipt. The receipt itself lists every item you bought — quantity, price, date. But it doesn't repeat the full product description on every line, or your full address on every purchase. That extra detail lives elsewhere (a product catalog, a customer record) and is just <em>linked</em> to each line by a code.</p>
+        <p style="font-size:13.5px; color:#555;">A star schema works the same way. Your <strong>fact table</strong> is the receipt — one row per event (one row per application). Your <strong>dimension tables</strong> are the product catalog and customer record — the reference information that gives context to each event.</p>
+        <div class="note-blue">💡 The benefit: instead of storing "Data Analyst, Hybrid, Manila, Kislap Labs" on every single one of the 2,660 application rows, you store the job details once in dim_jobs and just reference it with a job_id. Less repetition = faster queries = better dashboard performance.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-0-1">
+      <div class="substep-header" onclick="toggleSub('ss-0-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">What yours will look like</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="schema-diagram">
+          <div class="schema-row">
+            <div class="schema-table dim">
+              <div class="ttype">dimension</div>
+              <div class="tname">dim_date</div>
+              <div class="tcols">date<br>year, month<br>quarter, week</div>
+            </div>
+            <div class="schema-arrow">→</div>
+            <div class="schema-table fact">
+              <div class="ttype">fact (center)</div>
+              <div class="tname">fact_applications</div>
+              <div class="tcols">application_id<br>job_id · date_applied<br>status · interview_score<br>gender · education</div>
+            </div>
+            <div class="schema-arrow">←</div>
+            <div class="schema-table dim">
+              <div class="ttype">dimension</div>
+              <div class="tname">dim_jobs</div>
+              <div class="tcols">job_id<br>job_title · company<br>work_setup · salary</div>
+            </div>
+          </div>
+          <div class="schema-row" style="margin-top:8px;">
+            <div style="width:130px;"></div>
+            <div style="width:24px;"></div>
+            <div class="schema-table bridge" style="margin: 0 auto;">
+              <div class="ttype">bridge</div>
+              <div class="tname">bridge_job_skills</div>
+              <div class="tcols">job_id · skill_name</div>
+            </div>
+            <div class="schema-arrow">←</div>
+            <div class="schema-table dim">
+              <div class="ttype">dimension</div>
+              <div class="tname">dim_skills</div>
+              <div class="tcols">skill_name</div>
+            </div>
+          </div>
+        </div>
+        <div class="tag-row">
+          <span class="tag tag-fact">fact table — events</span>
+          <span class="tag tag-dim">dimension — reference info</span>
+          <span class="tag tag-bridge">bridge — many-to-many link</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-primary" onclick="goTo(1)">Next: Fact vs dimension →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: Fact vs dimension -->
+  <div class="step-card" id="step-1">
+    <div class="step-eyebrow">Understand first · Concept 2</div>
+    <div class="step-title">Fact tables vs dimension tables</div>
+    <div class="step-desc">The most important design decision in a star schema is knowing which table is the fact table and which are dimensions. Get this right and everything else follows naturally.</div>
+
+    <div class="substep open" id="ss-1-0">
+      <div class="substep-header" onclick="toggleSub('ss-1-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">The one-question test</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">Ask: <strong>"Does this table record something that happened, or does it describe something that exists?"</strong></p>
+        <table class="mini-table">
+          <tr><th>Table</th><th>Something that happened?</th><th>Something that exists?</th><th>Type</th></tr>
+          <tr><td>raw_applications</td><td class="cell-good">✓ — a person applied</td><td></td><td><span class="tag tag-fact">fact</span></td></tr>
+          <tr><td>raw_job_postings</td><td></td><td class="cell-good">✓ — a job exists</td><td><span class="tag tag-dim">dimension</span></td></tr>
+          <tr><td>skills</td><td></td><td class="cell-good">✓ — a skill exists</td><td><span class="tag tag-dim">dimension</span></td></tr>
+          <tr><td>dates</td><td></td><td class="cell-good">✓ — a date exists</td><td><span class="tag tag-dim">dimension</span></td></tr>
+        </table>
+        <div class="note">⚠️ A common mistake is making job postings your fact table. But a posting is not an event — it's a thing that exists. The <em>event</em> is someone applying to it. That's why applications is the fact table.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-1-1">
+      <div class="substep-header" onclick="toggleSub('ss-1-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">What columns belong in each type</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Fact table</th><th>Dimension table</th></tr>
+          <tr><td>Foreign keys (job_id, date)</td><td>Primary key (job_id, skill_name)</td></tr>
+          <tr><td>Measures — numbers you aggregate (interview_score)</td><td>Descriptive attributes (job_title, company, work_setup)</td></tr>
+          <tr><td>Status/outcome columns (Hired, Rejected)</td><td>Grouping columns (gender, education, age_band)</td></tr>
+          <tr><td>Grows with every event</td><td>Stable — doesn't grow as fast</td></tr>
+        </table>
+        <div class="note-blue">💡 A simple rule: if you'll ever put this column in a filter slicer or on an axis, it probably belongs in a dimension. If you'll ever sum or average it, it belongs in the fact table.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(0)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(2)">Next: Your model design →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Model design -->
+  <div class="step-card" id="step-2">
+    <div class="step-eyebrow">Understand first · Concept 3</div>
+    <div class="step-title">Your model design — what we'll build</div>
+    <div class="step-desc">Five tables total. Here's exactly what each one is, where it comes from, and why it exists — before you touch a single button.</div>
+
+    <div class="substep open" id="ss-2-0">
+      <div class="substep-header" onclick="toggleSub('ss-2-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">The five tables and their purpose</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Table</th><th>Source</th><th>Why it exists</th></tr>
+          <tr><td><strong>fact_applications</strong></td><td>raw_applications (renamed)</td><td>One row per application — the center of all analysis</td></tr>
+          <tr><td><strong>dim_jobs</strong></td><td>raw_job_postings (renamed)</td><td>Job details — title, company, location, salary</td></tr>
+          <tr><td><strong>dim_skills</strong></td><td>New — extracted from skills_raw</td><td>One row per unique skill name</td></tr>
+          <tr><td><strong>bridge_job_skills</strong></td><td>New — created from skills_raw</td><td>Links jobs to skills (one job has many skills)</td></tr>
+          <tr><td><strong>dim_date</strong></td><td>New — created with DAX</td><td>Calendar table for time intelligence (month, quarter, year)</td></tr>
+        </table>
+        <div class="note">💡 You already have the first two — they just need renaming. The last three are new and this guide walks you through creating each one step by step.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-2-1">
+      <div class="substep-header" onclick="toggleSub('ss-2-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Why skills need two tables (many-to-many explained)</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">One job posting has many skills ("SQL, Python, Power BI"). One skill appears in many job postings. This is called a many-to-many relationship — and Power BI struggles with it directly.</p>
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">The solution is a <strong>bridge table</strong>: a simple two-column table that lists every job-skill combination as its own row.</p>
+        <table class="mini-table">
+          <tr><th>job_id</th><th>skill_name</th></tr>
+          <tr><td>JP0001</td><td class="cell-good">SQL</td></tr>
+          <tr><td>JP0001</td><td class="cell-good">Python</td></tr>
+          <tr><td>JP0001</td><td class="cell-good">Power BI</td></tr>
+          <tr><td>JP0002</td><td class="cell-good">SQL</td></tr>
+          <tr><td>JP0002</td><td class="cell-good">Tableau</td></tr>
+        </table>
+        <div class="note-blue">💡 This lets you ask "how many jobs require SQL?" cleanly — just count the rows in bridge_job_skills where skill_name = "SQL".</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Next: Create dim_jobs →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: dim_jobs -->
+  <div class="step-card" id="step-3">
+    <div class="step-eyebrow">Build the model · Step 1</div>
+    <div class="step-title">Create dim_jobs</div>
+    <div class="step-desc">This is the easiest step — dim_jobs already exists as raw_job_postings. You just need to rename it and remove the skills_raw column (which will live in its own tables instead).</div>
+
+    <div class="substep open" id="ss-3-0">
+      <div class="substep-header" onclick="toggleSub('ss-3-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Rename raw_job_postings to dim_jobs</div>
+        <div class="substep-meta">Power Query Editor</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span>▶</span> Home tab → Transform Data (to re-open Power Query)</div>
+        <ol class="click-steps">
+          <li>Open Power Query Editor: Home tab → Transform Data.</li>
+          <li>In the Queries pane on the left, right-click <strong>raw_job_postings</strong>.</li>
+          <li>Click <strong>Rename</strong> and type <code>dim_jobs</code>. Press Enter.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-3-1">
+      <div class="substep-header" onclick="toggleSub('ss-3-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Remove the skills_raw and job_description columns</div>
+        <div class="substep-meta">Transform tab</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>In the <strong>dim_jobs</strong> query, click the <strong>skills_raw</strong> column header.</li>
+          <li>Hold <strong>Ctrl</strong> and also click <strong>job_description</strong>.</li>
+          <li>Right-click either selected column → <strong>Remove Columns</strong>.</li>
+        </ol>
+        <div class="note">💡 We're removing these because skills will live in their own tables (dim_skills and bridge_job_skills). Keeping skills_raw in dim_jobs would create confusion — the skills info would exist in two places. job_description is also no longer needed once skills_raw has done its job.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(4)">Next: Create dim_skills →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: dim_skills -->
+  <div class="step-card" id="step-4">
+    <div class="step-eyebrow">Build the model · Step 2</div>
+    <div class="step-title">Create dim_skills</div>
+    <div class="step-desc">dim_skills is a list of every unique skill name across all job postings. You'll create it as a new query by referencing dim_jobs, expanding the skills_raw column, and deduplicating. This is all done in Power Query.</div>
+
+    <div class="substep open" id="ss-4-0">
+      <div class="substep-header" onclick="toggleSub('ss-4-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Wait — add skills_raw back before removing it</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">Before you remove skills_raw from dim_jobs in Step 3, you need to first create a <strong>reference query</strong> from the original raw_job_postings that still has skills_raw. Here's the correct order:</p>
+        <ol class="click-steps">
+          <li>In the Queries pane, right-click <strong>dim_jobs</strong> (before removing skills_raw) → click <strong>Reference</strong>. A new query appears called "dim_jobs (2)".</li>
+          <li>Rename this new query to <code>dim_skills</code>.</li>
+          <li>Now go back to <strong>dim_jobs</strong> and remove skills_raw and job_description (as in step 3).</li>
+        </ol>
+        <div class="note-blue">💡 A Reference query is a live link — it always starts from whatever dim_jobs currently looks like after all its steps, so you don't need to re-apply any cleaning.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-4-1">
+      <div class="substep-header" onclick="toggleSub('ss-4-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">In dim_skills — keep only job_id and skills_raw</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>Click on the <strong>dim_skills</strong> query in the left panel.</li>
+          <li>Click the <strong>job_id</strong> column header, then hold Ctrl and click <strong>skills_raw</strong>.</li>
+          <li>Right-click → <strong>Remove Other Columns</strong> (not "Remove Columns" — "Remove Other Columns" keeps only what you selected).</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">You should now have just two columns</div>
+          <table class="mini-table">
+            <tr><th>job_id</th><th>skills_raw</th></tr>
+            <tr><td>JP0001</td><td class="cell-good">SQL, Python, Power BI, Excel</td></tr>
+            <tr><td>JP0002</td><td class="cell-good">Tableau, SQL, R, Statistics</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-4-2">
+      <div class="substep-header" onclick="toggleSub('ss-4-2')">
+        <div class="substep-num">3</div>
+        <div class="substep-label">Split skills_raw into one row per skill</div>
+        <div class="substep-meta">Transform tab → Split Column</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span>▶</span> Click skills_raw → Transform tab → Split Column → By Delimiter</div>
+        <ol class="click-steps">
+          <li>Select the <strong>skills_raw</strong> column.</li>
+          <li>Go to <strong>Transform</strong> tab → <strong>Split Column</strong> → <strong>By Delimiter</strong>.</li>
+          <li>In the dialog: set delimiter to <strong>Comma</strong>, and importantly — under "Split at", choose <strong>Each occurrence of the delimiter</strong>.</li>
+          <li>Expand <strong>Advanced options</strong> and set "Split into" to <strong>Rows</strong> (not columns — this is the key setting).</li>
+          <li>Click <strong>OK</strong>.</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">Before vs after</div>
+          <table class="mini-table">
+            <tr><th>Before (1 row)</th><th>After (4 rows)</th></tr>
+            <tr><td>JP0001 — "SQL, Python, Power BI, Excel"</td><td class="cell-good">JP0001 — SQL</td></tr>
+            <tr><td></td><td class="cell-good">JP0001 — Python</td></tr>
+            <tr><td></td><td class="cell-good">JP0001 — Power BI</td></tr>
+            <tr><td></td><td class="cell-good">JP0001 — Excel</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-4-3">
+      <div class="substep-header" onclick="toggleSub('ss-4-3')">
+        <div class="substep-num">4</div>
+        <div class="substep-label">Trim, deduplicate, and rename to skill_name</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>Select the <strong>skills_raw</strong> column → Transform tab → Format → <strong>Trim</strong>.</li>
+          <li>Right-click the column header → <strong>Rename</strong> → type <code>skill_name</code>.</li>
+          <li>Now click the <strong>skill_name</strong> column only → Home tab → <strong>Remove Rows → Remove Duplicates</strong>. This keeps only one row per unique skill.</li>
+          <li>Also remove the <strong>job_id</strong> column — dim_skills only needs the skill name list.</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">Final dim_skills — one row per unique skill</div>
+          <table class="mini-table">
+            <tr><th>skill_name</th></tr>
+            <tr><td class="cell-good">SQL</td></tr>
+            <tr><td class="cell-good">Python</td></tr>
+            <tr><td class="cell-good">Power BI</td></tr>
+            <tr><td class="cell-good">Tableau</td></tr>
+            <tr><td class="cell-good">Excel</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(3)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(5)">Next: Create bridge_job_skills →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: bridge_job_skills -->
+  <div class="step-card" id="step-5">
+    <div class="step-eyebrow">Build the model · Step 3</div>
+    <div class="step-title">Create bridge_job_skills</div>
+    <div class="step-desc">This is almost identical to creating dim_skills — same split process, but this time you keep both job_id and skill_name to create the many-to-many link.</div>
+
+    <div class="substep open" id="ss-5-0">
+      <div class="substep-header" onclick="toggleSub('ss-5-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Create another reference from dim_jobs</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>In the Queries pane, right-click <strong>dim_jobs</strong> → <strong>Reference</strong>.</li>
+          <li>Rename the new query to <code>bridge_job_skills</code>.</li>
+          <li>Select <strong>job_id</strong> and <strong>skills_raw</strong>, then right-click → <strong>Remove Other Columns</strong>.</li>
+        </ol>
+        <div class="note">⚠️ Wait — dim_jobs no longer has skills_raw if you already removed it. If that's the case, right-click the original source before the remove step. Check your Applied Steps in dim_jobs — you can temporarily move the "Remove Columns" step to after you create this reference, then move it back.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-5-1">
+      <div class="substep-header" onclick="toggleSub('ss-5-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Split into rows, trim, rename</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>Select <strong>skills_raw</strong> → Transform → Split Column → By Delimiter → Comma → Rows.</li>
+          <li>Trim the skills_raw column → rename it to <code>skill_name</code>.</li>
+          <li>This time do <strong>NOT</strong> remove duplicates and do <strong>NOT</strong> remove job_id — you need both columns.</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">Final bridge_job_skills</div>
+          <table class="mini-table">
+            <tr><th>job_id</th><th>skill_name</th></tr>
+            <tr><td>JP0001</td><td class="cell-good">SQL</td></tr>
+            <tr><td>JP0001</td><td class="cell-good">Python</td></tr>
+            <tr><td>JP0001</td><td class="cell-good">Power BI</td></tr>
+            <tr><td>JP0002</td><td class="cell-good">SQL</td></tr>
+            <tr><td>JP0002</td><td class="cell-good">Tableau</td></tr>
+          </table>
+        </div>
+        <div class="note-blue">💡 SQL appearing for both JP0001 and JP0002 is correct — that's the point of the bridge table. Each row is one job-skill pair, not one unique skill.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(4)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(6)">Next: Create dim_date →</button>
+    </div>
+  </div>
+
+  <!-- STEP 6: dim_date -->
+  <div class="step-card" id="step-6">
+    <div class="step-eyebrow">Build the model · Step 4</div>
+    <div class="step-title">Create dim_date</div>
+    <div class="step-desc">dim_date is a special table — it's not created from your CSV data, but generated using a DAX formula directly in Power BI. It gives you a complete calendar from Jan to Jun 2026 with columns like Year, Month, Quarter, and Week — which Power BI needs for time intelligence calculations.</div>
+
+    <div class="substep open" id="ss-6-0">
+      <div class="substep-header" onclick="toggleSub('ss-6-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Close & Apply first, then create dim_date from the main canvas</div>
+        <div class="substep-meta">Home tab → Table tools → New table</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>Click <strong>Close & Apply</strong> in Power Query to return to the main Power BI canvas.</li>
+          <li>In the <strong>Table tools</strong> tab (or <strong>Modeling</strong> tab), click <strong>New Table</strong>.</li>
+          <li>A formula bar appears — paste this DAX formula:</li>
+        </ol>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">dim_date</span> =
+<span class="kw">ADDCOLUMNS</span>(
+    <span class="kw">CALENDAR</span>(<span class="kw">DATE</span>(2026,1,1), <span class="kw">DATE</span>(2026,6,30)),
+    <span class="str">"Year"</span>,        <span class="kw">YEAR</span>([Date]),
+    <span class="str">"Month"</span>,       <span class="kw">MONTH</span>([Date]),
+    <span class="str">"MonthName"</span>,   <span class="kw">FORMAT</span>([Date], <span class="str">"MMMM"</span>),
+    <span class="str">"MonthShort"</span>,  <span class="kw">FORMAT</span>([Date], <span class="str">"MMM"</span>),
+    <span class="str">"Quarter"</span>,     <span class="str">"Q"</span> &amp; <span class="kw">QUARTER</span>([Date]),
+    <span class="str">"WeekNum"</span>,     <span class="kw">WEEKNUM</span>([Date]),
+    <span class="str">"DayOfWeek"</span>,   <span class="kw">FORMAT</span>([Date], <span class="str">"dddd"</span>),
+    <span class="str">"YearMonth"</span>,   <span class="kw">FORMAT</span>([Date], <span class="str">"YYYY-MM"</span>)
+)
+        </div>
+        <ol class="click-steps" style="counter-reset:cstep 3;">
+          <li>Press <strong>Enter</strong> or click the checkmark. A new table called dim_date appears in your Fields panel.</li>
+        </ol>
+        <div class="note-blue">💡 CALENDAR(start, end) generates one row per day between those dates. ADDCOLUMNS then adds extra columns to each row — year, month name, quarter, etc. — all calculated from that date. This is your first real DAX formula!</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-6-1">
+      <div class="substep-header" onclick="toggleSub('ss-6-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Mark it as a Date Table</div>
+        <div class="substep-meta">Table tools → Mark as date table</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>Click anywhere on the <strong>dim_date</strong> table in the Fields panel to select it.</li>
+          <li>Go to <strong>Table tools</strong> tab → click <strong>Mark as date table</strong>.</li>
+          <li>In the dialog, set the date column to <strong>Date</strong> → click <strong>OK</strong>.</li>
+        </ol>
+        <div class="note">💡 This tells Power BI "use this table for all time intelligence calculations." Without it, functions like TOTALYTD, SAMEPERIODLASTYEAR, and DATESMTD won't work correctly.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(5)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(7)">Next: Rename fact table →</button>
+    </div>
+  </div>
+
+  <!-- STEP 7: Rename fact table -->
+  <div class="step-card" id="step-7">
+    <div class="step-eyebrow">Build the model · Step 5</div>
+    <div class="step-title">Rename raw_applications to fact_applications</div>
+    <div class="step-desc">Quick step — same as renaming raw_job_postings. Clean naming matters for your model: when you're building DAX measures and visuals later, seeing "fact_applications" and "dim_jobs" in the field list makes it immediately obvious which table is which.</div>
+
+    <div class="substep open" id="ss-7-0">
+      <div class="substep-header" onclick="toggleSub('ss-7-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Rename in Power Query</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span>▶</span> Home → Transform Data → right-click raw_applications</div>
+        <ol class="click-steps">
+          <li>Open Power Query: Home tab → <strong>Transform Data</strong>.</li>
+          <li>Right-click <strong>raw_applications</strong> in the Queries pane → <strong>Rename</strong>.</li>
+          <li>Type <code>fact_applications</code> → press Enter.</li>
+          <li>Click <strong>Close & Apply</strong>.</li>
+        </ol>
+        <div class="result-preview">
+          <div class="rp-label">Your Queries pane should now show</div>
+          <div style="font-family:monospace; font-size:13px; color:#333; line-height:2;">
+            📋 fact_applications<br>
+            📋 dim_jobs<br>
+            📋 dim_skills<br>
+            📋 bridge_job_skills<br>
+            📋 dim_date
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(6)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(8)">Next: Open Model view →</button>
+    </div>
+  </div>
+
+  <!-- STEP 8: Open model view -->
+  <div class="step-card" id="step-8">
+    <div class="step-eyebrow">Connect everything · Step 1</div>
+    <div class="step-title">Open Model view</div>
+    <div class="step-desc">Model view is where you visually connect your tables with relationships — like drawing lines between them. It's accessed from the left sidebar in Power BI Desktop.</div>
+
+    <div class="substep open" id="ss-8-0">
+      <div class="substep-header" onclick="toggleSub('ss-8-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Navigate to Model view and arrange your tables</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>On the left side of Power BI Desktop, look for the vertical icon bar. Click the <strong>Model view icon</strong> — it looks like three connected boxes (below the Report and Data view icons).</li>
+          <li>You'll see all your tables laid out as cards, possibly overlapping randomly. Drag them to arrange like the star schema diagram: <strong>fact_applications in the center</strong>, dim_jobs to the right, dim_date to the top, dim_skills to the bottom-right, bridge_job_skills between dim_jobs and dim_skills.</li>
+          <li>Arranging them visually first makes it easier to draw relationships without lines crossing everywhere.</li>
+        </ol>
+        <div class="note-blue">💡 Power BI may have already auto-detected some relationships (shown as lines between tables). Check if they're correct before adding new ones — incorrect auto-detected relationships can cause wrong results in your visuals.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(7)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(9)">Next: Set up relationships →</button>
+    </div>
+  </div>
+
+  <!-- STEP 9: Relationships -->
+  <div class="step-card" id="step-9">
+    <div class="step-eyebrow">Connect everything · Step 2</div>
+    <div class="step-title">Set up relationships</div>
+    <div class="step-desc">A relationship tells Power BI "these two columns in different tables contain the same values — use them to connect the tables." You create one relationship per connection line in the star schema.</div>
+
+    <div class="substep open" id="ss-9-0">
+      <div class="substep-header" onclick="toggleSub('ss-9-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">How to create a relationship</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">Two ways — pick whichever feels easier:</p>
+        <p style="font-size:13.5px; color:#555; margin-bottom:6px;"><strong>Option A — drag and drop:</strong> In Model view, click and hold the column name inside one table card, then drag it onto the matching column in another table card. A line appears between them.</p>
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;"><strong>Option B — Manage Relationships dialog:</strong> Home tab → Manage Relationships → New → pick both tables and their matching columns from dropdowns.</p>
+        <div class="note-blue">💡 Option A is faster and more visual. Option B is safer when tables have many columns and you want to be precise about which column you're selecting.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-9-1">
+      <div class="substep-header" onclick="toggleSub('ss-9-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">The 4 relationships to create</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>From table · column</th><th>To table · column</th><th>Cardinality</th></tr>
+          <tr><td>dim_jobs · <strong>job_id</strong></td><td>fact_applications · <strong>job_id</strong></td><td>One-to-many (1:*)</td></tr>
+          <tr><td>dim_jobs · <strong>job_id</strong></td><td>bridge_job_skills · <strong>job_id</strong></td><td>One-to-many (1:*)</td></tr>
+          <tr><td>dim_skills · <strong>skill_name</strong></td><td>bridge_job_skills · <strong>skill_name</strong></td><td>One-to-many (1:*)</td></tr>
+          <tr><td>dim_date · <strong>Date</strong></td><td>fact_applications · <strong>date_applied</strong></td><td>One-to-many (1:*)</td></tr>
+        </table>
+        <div class="note">⚠️ Cardinality: "One-to-many" means one job in dim_jobs can match many applications in fact_applications (one job, many applicants). Always set the "one" side on the dimension table and the "many" side on the fact table. Power BI usually detects this automatically when you drag — just confirm it in the relationship dialog.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-9-2">
+      <div class="substep-header" onclick="toggleSub('ss-9-2')">
+        <div class="substep-num">3</div>
+        <div class="substep-label">Cross-filter direction — which way to set it</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">When you create a relationship, Power BI also asks about "cross-filter direction." This controls which way filters flow across the relationship.</p>
+        <table class="mini-table">
+          <tr><th>Relationship</th><th>Direction</th><th>Why</th></tr>
+          <tr><td>dim_jobs → fact_applications</td><td class="cell-good">Single</td><td>Filters flow from dim to fact only</td></tr>
+          <tr><td>dim_jobs → bridge_job_skills</td><td class="cell-good">Single</td><td>Standard dimension to bridge</td></tr>
+          <tr><td>dim_skills → bridge_job_skills</td><td class="cell-good">Both</td><td>Needed so skill filters reach fact_applications through the bridge</td></tr>
+          <tr><td>dim_date → fact_applications</td><td class="cell-good">Single</td><td>Date filters flow into applications</td></tr>
+        </table>
+        <div class="note-blue">💡 "Single" means filters only travel one way (dimension → fact). "Both" means filters travel in either direction. The dim_skills → bridge relationship needs "Both" so that when you filter by skill in a visual, it correctly counts only the applications for jobs requiring that skill.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(8)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(10)">Next: Validate the model →</button>
+    </div>
+  </div>
+
+  <!-- STEP 10: Validate -->
+  <div class="step-card" id="step-10">
+    <div class="step-eyebrow">Connect everything · Step 3</div>
+    <div class="step-title">Validate the model</div>
+    <div class="step-desc">Before moving to Phase 3 (DAX measures), do a quick sanity check. A broken model produces wrong numbers silently — it won't throw an error, it'll just show you incorrect data in your visuals.</div>
+
+    <div class="substep open" id="ss-10-0">
+      <div class="substep-header" onclick="toggleSub('ss-10-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Model view checklist</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Check</th><th>Expected</th></tr>
+          <tr><td>Number of relationship lines</td><td class="cell-good">4 lines connecting 5 tables</td></tr>
+          <tr><td>fact_applications connections</td><td class="cell-good">Connected to dim_jobs and dim_date</td></tr>
+          <tr><td>bridge_job_skills connections</td><td class="cell-good">Connected to dim_jobs and dim_skills</td></tr>
+          <tr><td>Cardinality on every line</td><td class="cell-good">Shows 1 on dim side, * on fact/bridge side</td></tr>
+          <tr><td>Any yellow warning icons</td><td class="cell-good">None — a warning means an inactive or broken relationship</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-10-1">
+      <div class="substep-header" onclick="toggleSub('ss-10-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Quick visual test in Report view</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>Switch to <strong>Report view</strong> (top icon in the left sidebar).</li>
+          <li>Add a <strong>Table visual</strong> from the Visualizations pane.</li>
+          <li>Drag these fields into it: <code>dim_jobs[job_title]</code>, <code>fact_applications[status]</code>, <code>fact_applications[interview_score]</code>.</li>
+          <li>If you see job titles next to application statuses and scores, your dim_jobs → fact_applications relationship is working. Delete this test visual after checking.</li>
+        </ol>
+        <div class="note">💡 If the table shows blank job titles, the relationship between fact_applications and dim_jobs isn't working — go back to Model view and check that both job_id columns are connected and have matching values.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-10-2">
+      <div class="substep-header" onclick="toggleSub('ss-10-2')">
+        <div class="substep-num">3</div>
+        <div class="substep-label">Save your file</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>Press <strong>Ctrl+S</strong> to save your .pbix file.</li>
+          <li>Your star schema is now complete and ready for Phase 3 — writing DAX measures.</li>
+        </ol>
+        <div class="note" style="background:#e2f5ec; border-left-color:#3ab57a; color:#1a4a2a;">
+          🎉 <strong>Phase 2 complete.</strong> You now have a proper star schema with 5 tables and 4 relationships. Phase 3 is DAX measures — things like hire rate, median salary, funnel conversion rates, and time intelligence. Everything you build in Phase 4 (the dashboard visuals) will pull from these measures.
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(9)">← Back</button>
+      <button class="btn btn-primary" disabled>Phase 3: DAX Measures →</button>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+  const TOTAL = 11;
+  let current = 0;
+
+  function goTo(idx) {
+    document.getElementById('step-' + current).classList.remove('active');
+    document.getElementById('nav-' + current).classList.remove('active');
+    document.getElementById('nav-' + current).classList.add('done');
+    current = idx;
+    document.getElementById('step-' + current).classList.add('active');
+    document.getElementById('nav-' + current).classList.add('active');
+    document.getElementById('nav-' + current).classList.remove('done');
+    document.getElementById('progress').style.width = (((idx + 1) / TOTAL) * 100).toFixed(1) + '%';
+    window.scrollTo(0, 0);
+  }
+
+  function toggleSub(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  function copyCode(btn) {
+    const box = btn.parentElement;
+    const text = box.innerText.replace('Copy','').replace('Copied!','').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
