@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phase 3 — DAX Measures Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a18; font-size: 15px; line-height: 1.6; }
+  .shell { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar { width: 260px; min-width: 260px; background: #1e1e1c; color: #c8c6be; position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; }
+  .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid #333330; }
+  .sidebar-header .logo { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6c6b64; margin-bottom: 4px; }
+  .sidebar-header .phase { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #9b59b6; margin-bottom: 6px; }
+  .sidebar-header h1 { font-size: 15px; font-weight: 600; color: #f0ede6; line-height: 1.3; }
+  .sidebar-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #4a4a44; padding: 20px 20px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; border-left: 3px solid transparent; transition: background 0.15s; color: #8a8880; font-size: 13.5px; }
+  .nav-item:hover { background: #2a2a27; color: #d0cec6; }
+  .nav-item.active { background: #2e2e2b; border-left-color: #9b59b6; color: #f0ede6; }
+  .nav-item.done { color: #7ab897; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: #4a4a44; flex-shrink: 0; }
+  .nav-item.active .nav-dot { background: #9b59b6; }
+  .nav-item.done .nav-dot { background: #3ab57a; }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-thumb { background: #333330; border-radius: 2px; }
+
+  /* Main */
+  .main { flex: 1; padding: 40px 48px; max-width: 860px; }
+  .progress-bar { height: 3px; background: #e4e2db; margin-bottom: 32px; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #9b59b6; border-radius: 2px; transition: width 0.4s ease; }
+
+  /* Step cards */
+  .step-card { display: none; animation: fadeIn 0.2s ease; }
+  .step-card.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+  .step-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #9b59b6; margin-bottom: 8px; }
+  .step-title { font-size: 26px; font-weight: 700; color: #1a1a18; line-height: 1.2; margin-bottom: 10px; }
+  .step-desc { font-size: 15px; color: #555550; margin-bottom: 28px; max-width: 620px; line-height: 1.65; }
+
+  /* Substeps */
+  .substep { background: #fff; border: 1px solid #e4e2db; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+  .substep-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; cursor: pointer; user-select: none; }
+  .substep-header:hover { background: #faf9f6; }
+  .substep-num { width: 28px; height: 28px; border-radius: 50%; background: #f0ede6; color: #888880; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .substep.open .substep-num { background: #f0e6f8; color: #9b59b6; }
+  .substep-label { font-weight: 600; font-size: 14px; flex: 1; }
+  .substep-meta { font-size: 12px; color: #aaa8a0; }
+  .substep-chevron { font-size: 12px; color: #aaa8a0; transition: transform 0.2s; }
+  .substep.open .substep-chevron { transform: rotate(180deg); }
+  .substep-body { display: none; padding: 0 20px 20px; border-top: 1px solid #f0ede6; }
+  .substep.open .substep-body { display: block; }
+
+  /* Components */
+  .where { display: inline-flex; align-items: center; gap: 6px; background: #f0e6f8; color: #6a2a8a; border: 1px solid #d4a8e8; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; margin: 14px 0 10px; }
+  .click-steps { list-style: none; counter-reset: cstep; margin: 8px 0; }
+  .click-steps li { counter-increment: cstep; display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid #f5f4f0; font-size: 13.5px; line-height: 1.5; color: #333330; align-items: flex-start; }
+  .click-steps li:last-child { border-bottom: none; }
+  .click-steps li::before { content: counter(cstep); width: 22px; height: 22px; border-radius: 50%; background: #1e1e1c; color: #f0ede6; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .formula-box { background: #1e1e1c; border-radius: 8px; padding: 14px 18px; margin: 12px 0; font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 13px; color: #c8c6be; line-height: 1.8; overflow-x: auto; position: relative; }
+  .formula-box .kw { color: #9b59b6; font-weight: 600; }
+  .formula-box .fn { color: #4a8fa8; }
+  .formula-box .str { color: #98c379; }
+  .formula-box .num { color: #f0a500; }
+  .formula-box .cmt { color: #555550; font-style: italic; }
+  .formula-box .tbl { color: #e06c75; }
+  .formula-box .col { color: #f0ede6; }
+  .copy-btn { position: absolute; top: 10px; right: 10px; background: #333330; border: none; color: #888880; padding: 4px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+  .copy-btn:hover { background: #444440; color: #f0ede6; }
+  .copy-btn.copied { background: #1a3a2a; color: #3ab57a; }
+  .note { background: #fff8e6; border-left: 3px solid #f0a500; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #6a5010; margin: 12px 0; line-height: 1.5; }
+  .note-blue { background: #e8f4f8; border-left: 3px solid #4a8fa8; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #1a4f6a; margin: 12px 0; line-height: 1.5; }
+  .note-purple { background: #f5eefa; border-left: 3px solid #9b59b6; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #4a1a6a; margin: 12px 0; line-height: 1.5; }
+  .mini-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; }
+  .mini-table th { background: #1e1e1c; color: #c8c6be; padding: 7px 12px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mini-table td { padding: 7px 12px; border-bottom: 1px solid #f0ede6; }
+  .mini-table tr:last-child td { border-bottom: none; }
+  .mini-table tr:nth-child(even) td { background: #faf9f6; }
+  .cell-good { color: #1a6640; font-weight: 600; }
+  .cell-bad { color: #a83232; font-weight: 600; }
+  .cell-null { color: #aaa8a0; font-style: italic; }
+  .result-preview { background: #f5f4f0; border: 1px solid #e4e2db; border-radius: 8px; padding: 14px 16px; margin-top: 12px; }
+  .result-preview .rp-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #888880; margin-bottom: 10px; }
+  .tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+
+  /* Anatomy box */
+  .anatomy { background: #1e1e1c; border-radius: 10px; padding: 20px; margin: 16px 0; }
+  .anatomy-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .anatomy-row:last-child { margin-bottom: 0; }
+  .anatomy-token { font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 13px; padding: 4px 10px; border-radius: 6px; flex-shrink: 0; min-width: 160px; text-align: center; }
+  .anatomy-desc { font-size: 13px; color: #8a8880; line-height: 1.5; padding-top: 4px; }
+  .tok-fn { background: #1a3a4a; color: #4a8fa8; border: 1px solid #2a5a6a; }
+  .tok-tbl { background: #2a1a1e; color: #e06c75; border: 1px solid #4a2a2e; }
+  .tok-col { background: #2a2a1a; color: #f0ede6; border: 1px solid #4a4a2a; }
+  .tok-filter { background: #2a1a3a; color: #9b59b6; border: 1px solid #4a2a5a; }
+  .tok-op { background: #2a2010; color: #f0a500; border: 1px solid #4a4020; }
+
+  /* Nav */
+  .nav-btns { display: flex; gap: 12px; margin-top: 36px; padding-top: 24px; border-top: 1px solid #e4e2db; }
+  .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: background 0.15s; }
+  .btn-primary { background: #1e1e1c; color: #f0ede6; }
+  .btn-primary:hover { background: #333330; }
+  .btn-secondary { background: #fff; color: #555550; border: 1px solid #d8d6ce; }
+  .btn-secondary:hover { background: #f5f4f0; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">Power BI · Portfolio Project</div>
+    <div class="phase">Phase 3</div>
+    <h1>DAX Measures</h1>
+  </div>
+
+  <div class="sidebar-section-label">Understand DAX First</div>
+  <div class="nav-item active" onclick="goTo(0)" id="nav-0"><div class="nav-dot"></div> What is DAX?</div>
+  <div class="nav-item" onclick="goTo(1)" id="nav-1"><div class="nav-dot"></div> Measures vs calculated columns</div>
+  <div class="nav-item" onclick="goTo(2)" id="nav-2"><div class="nav-dot"></div> How to write a measure</div>
+  <div class="nav-item" onclick="goTo(3)" id="nav-3"><div class="nav-dot"></div> What is filter context?</div>
+
+  <div class="sidebar-section-label">Funnel KPIs</div>
+  <div class="nav-item" onclick="goTo(4)" id="nav-4"><div class="nav-dot"></div> Total applications</div>
+  <div class="nav-item" onclick="goTo(5)" id="nav-5"><div class="nav-dot"></div> Count by funnel stage</div>
+  <div class="nav-item" onclick="goTo(6)" id="nav-6"><div class="nav-dot"></div> Hire rate & offer rate</div>
+  <div class="nav-item" onclick="goTo(7)" id="nav-7"><div class="nav-dot"></div> Stage conversion rates</div>
+
+  <div class="sidebar-section-label">Salary</div>
+  <div class="nav-item" onclick="goTo(8)" id="nav-8"><div class="nav-dot"></div> Median & average salary</div>
+  <div class="nav-item" onclick="goTo(9)" id="nav-9"><div class="nav-dot"></div> Salary by role & work setup</div>
+
+  <div class="sidebar-section-label">Skills</div>
+  <div class="nav-item" onclick="goTo(10)" id="nav-10"><div class="nav-dot"></div> Job count by skill</div>
+
+  <div class="sidebar-section-label">Fairness</div>
+  <div class="nav-item" onclick="goTo(11)" id="nav-11"><div class="nav-dot"></div> Hire rate by gender</div>
+  <div class="nav-item" onclick="goTo(12)" id="nav-12"><div class="nav-dot"></div> Hire rate by education & age</div>
+
+  <div class="sidebar-section-label">Time Intelligence</div>
+  <div class="nav-item" onclick="goTo(13)" id="nav-13"><div class="nav-dot"></div> Postings over time</div>
+  <div class="nav-item" onclick="goTo(14)" id="nav-14"><div class="nav-dot"></div> Applications MTD & by month</div>
+
+  <div class="sidebar-section-label">Finish</div>
+  <div class="nav-item" onclick="goTo(15)" id="nav-15"><div class="nav-dot"></div> Organise into a measure table</div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:6.25%"></div></div>
+
+  <!-- STEP 0: What is DAX -->
+  <div class="step-card active" id="step-0">
+    <div class="step-eyebrow">Understand DAX first · Concept 1</div>
+    <div class="step-title">What is DAX?</div>
+    <div class="step-desc">DAX stands for Data Analysis Expressions. It's the formula language of Power BI — you use it to create calculations that your visuals and KPI cards pull from. Think of it as Excel formulas, but built for tables with relationships instead of individual cells.</div>
+
+    <div class="substep open" id="ss-0-0">
+      <div class="substep-header" onclick="toggleSub('ss-0-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">DAX vs Excel vs M — what's the difference?</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Language</th><th>Where it runs</th><th>What it does</th><th>You used it in</th></tr>
+          <tr><td><strong>M</strong></td><td>Power Query Editor</td><td>Cleans and shapes raw data before it loads</td><td>Phase 1</td></tr>
+          <tr><td><strong>DAX</strong></td><td>Report / Model view</td><td>Calculates values from already-loaded, clean data</td><td>Phase 3 ← you are here</td></tr>
+          <tr><td><strong>Excel formulas</strong></td><td>Excel cells</td><td>Works on individual cells in a grid</td><td>Not in Power BI</td></tr>
+        </table>
+        <div class="note-purple" style="margin-top:12px;">💡 The key difference from Excel: DAX doesn't work on individual cells. It works on entire columns and tables at once, and it respects the relationships you set up in Phase 2. When you write a DAX measure, it automatically adjusts based on whatever filter is applied in the visual — more on that when we cover filter context.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-0-1">
+      <div class="substep-header" onclick="toggleSub('ss-0-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">What DAX will do for your dashboard</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">Every number your dashboard displays will come from a DAX measure. Here's what you'll build in this phase:</p>
+        <table class="mini-table">
+          <tr><th>Category</th><th>What it answers</th></tr>
+          <tr><td>Funnel KPIs</td><td>How many applicants reached each stage? What % got hired?</td></tr>
+          <tr><td>Salary</td><td>What's the median monthly salary for each role?</td></tr>
+          <tr><td>Skills</td><td>Which skills appear in the most job postings?</td></tr>
+          <tr><td>Fairness</td><td>Is the hire rate different across gender, education, or age group?</td></tr>
+          <tr><td>Time intelligence</td><td>How many applications were submitted per month?</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-primary" onclick="goTo(1)">Next: Measures vs calculated columns →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: Measures vs calculated columns -->
+  <div class="step-card" id="step-1">
+    <div class="step-eyebrow">Understand DAX first · Concept 2</div>
+    <div class="step-title">Measures vs calculated columns</div>
+    <div class="step-desc">DAX can create two things: measures and calculated columns. Beginners often mix these up. Understanding the difference will save you a lot of confusion.</div>
+
+    <div class="substep open" id="ss-1-0">
+      <div class="substep-header" onclick="toggleSub('ss-1-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">The core difference</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th></th><th>Measure</th><th>Calculated column</th></tr>
+          <tr><td><strong>What it is</strong></td><td>A formula that calculates at query time</td><td>A new column added to a table</td></tr>
+          <tr><td><strong>When it calculates</strong></td><td>Every time a visual renders or a filter changes</td><td>Once when data loads, stored in the table</td></tr>
+          <tr><td><strong>What it returns</strong></td><td>A single value (a number, a %)</td><td>A value for every row</td></tr>
+          <tr><td><strong>Responds to slicers?</strong></td><td>✅ Yes — automatically</td><td>❌ No — it's fixed per row</td></tr>
+          <tr><td><strong>Example</strong></td><td>Hire Rate = 6.1%</td><td>age_band = "25–34"</td></tr>
+        </table>
+        <div class="note">⚠️ Almost everything you build in Phase 3 will be <strong>measures</strong> — not calculated columns. You already created calculated columns in Phase 1 (age_band, salary_midpoint). Measures are for KPIs and aggregations that need to respond to filters.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-1-1">
+      <div class="substep-header" onclick="toggleSub('ss-1-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">A simple test to know which one to use</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">Ask: <strong>"Do I want a different value per row, or a single summary value across many rows?"</strong></p>
+        <p style="font-size:13.5px; color:#555; margin-bottom:6px;">Different value per row (one result per application, one result per job) → <strong>Calculated column</strong></p>
+        <p style="font-size:13.5px; color:#555;">A single summary that changes based on filters (total hired, average score, hire rate) → <strong>Measure</strong></p>
+        <div class="note-purple">💡 If you're ever unsure — default to a measure. Measures are more flexible, use less memory, and respond to your dashboard's slicers automatically. Calculated columns are rigid and take up storage.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(0)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(2)">Next: How to write a measure →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: How to write a measure -->
+  <div class="step-card" id="step-2">
+    <div class="step-eyebrow">Understand DAX first · Concept 3</div>
+    <div class="step-title">How to write a measure in Power BI</div>
+    <div class="step-desc">Before writing any specific measures, here's the mechanics — where to type it, what the syntax looks like, and how to read a DAX formula without getting lost.</div>
+
+    <div class="substep open" id="ss-2-0">
+      <div class="substep-header" onclick="toggleSub('ss-2-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Where to create a measure</div>
+        <div class="substep-meta">Report view or Model view</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span>▶</span> Home tab → New Measure  —or—  right-click a table → New Measure</div>
+        <ol class="click-steps">
+          <li>In Report view or Model view, go to the <strong>Home</strong> tab → click <strong>New Measure</strong>. A formula bar appears at the top.</li>
+          <li>Alternatively: in the Fields panel on the right, right-click any table name → <strong>New Measure</strong>. This also controls which table the measure lives in.</li>
+          <li>Type your formula in the bar and press <strong>Enter</strong> or click the checkmark ✓ to save. Press <strong>Esc</strong> to cancel without saving.</li>
+        </ol>
+        <div class="note-blue">💡 Best practice: create a blank table called <code>_Measures</code> to store all your measures in one place. This keeps the Fields panel tidy. We'll set this up in the last step of this guide.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-2-1">
+      <div class="substep-header" onclick="toggleSub('ss-2-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Anatomy of a DAX formula</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:14px;">Every measure follows this structure. Let's break down a real one:</p>
+        <div class="formula-box">
+<span class="kw">Total Applications</span> = <span class="fn">COUNTROWS</span>( <span class="tbl">fact_applications</span> )
+        </div>
+        <div class="anatomy">
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-fn">Total Applications</div>
+            <div class="anatomy-desc">The <strong>measure name</strong> — this is what appears in the Fields panel and in your visuals. Make it readable, like a label.</div>
+          </div>
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-op">=</div>
+            <div class="anatomy-desc">Every measure starts with an equals sign — just like Excel.</div>
+          </div>
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-fn">COUNTROWS</div>
+            <div class="anatomy-desc">A <strong>DAX function</strong> — this one counts the number of rows in a table. Functions are always in CAPS.</div>
+          </div>
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-tbl">fact_applications</div>
+            <div class="anatomy-desc">The <strong>table name</strong> — always written in plain text, no brackets. This tells DAX which table to look at.</div>
+          </div>
+        </div>
+        <div class="note-purple">💡 Column references look like <code>table[column]</code> — for example <code>fact_applications[status]</code>. The table name comes first, then the column in square brackets. You'll see this pattern in every measure.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-2-2">
+      <div class="substep-header" onclick="toggleSub('ss-2-2')">
+        <div class="substep-num">3</div>
+        <div class="substep-label">The most common DAX functions — your toolkit</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Function</th><th>What it does</th><th>Example</th></tr>
+          <tr><td><code>COUNTROWS</code></td><td>Counts rows in a table</td><td>Count applications</td></tr>
+          <tr><td><code>CALCULATE</code></td><td>Evaluates a measure with a filter applied</td><td>Count only Hired rows</td></tr>
+          <tr><td><code>DIVIDE</code></td><td>Divides safely (returns blank instead of error if ÷0)</td><td>Hire rate = hired ÷ total</td></tr>
+          <tr><td><code>MEDIAN</code></td><td>Finds the middle value of a column</td><td>Median salary</td></tr>
+          <tr><td><code>AVERAGE</code></td><td>Averages a numeric column</td><td>Average interview score</td></tr>
+          <tr><td><code>FILTER</code></td><td>Returns a filtered subset of a table</td><td>Used inside CALCULATE</td></tr>
+          <tr><td><code>ALL</code></td><td>Removes filters from a table/column</td><td>% of total calculations</td></tr>
+          <tr><td><code>TOTALYTD</code></td><td>Year-to-date total</td><td>Cumulative applications</td></tr>
+        </table>
+        <div class="note">⚠️ You don't need to memorise all of these now. Every measure in this guide uses at most 2-3 functions. Read the formula, match each word to this table, and it'll make sense.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(1)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Next: Filter context →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Filter context -->
+  <div class="step-card" id="step-3">
+    <div class="step-eyebrow">Understand DAX first · Concept 4</div>
+    <div class="step-title">What is filter context?</div>
+    <div class="step-desc">Filter context is the most important concept in DAX. Once this clicks, everything else makes sense. It's the reason why the same measure shows a different number depending on where it's placed in a visual.</div>
+
+    <div class="substep open" id="ss-3-0">
+      <div class="substep-header" onclick="toggleSub('ss-3-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">The analogy — a moving spotlight</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">Imagine your entire fact_applications table is a stage with 2,659 actors (rows). A DAX measure is a person counting how many actors are on stage. Filter context is the spotlight — it determines which part of the stage is visible when the counting happens.</p>
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">When you put <code>Total Applications</code> in a bar chart with <code>work_setup</code> on the axis, Power BI automatically shines the spotlight on just the "Remote" rows, counts them, then moves to "Hybrid", counts again, then "Onsite". The measure itself never changes — the filter context does.</p>
+        <div class="note-purple">💡 This is why a single measure like <code>Total Applications = COUNTROWS(fact_applications)</code> can show 2,659 on a KPI card (no filter), 890 in the "Remote" bar (filtered by work_setup), and 45 in a specific month's column (filtered by date). Same measure, different filter context, different result.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-3-1">
+      <div class="substep-header" onclick="toggleSub('ss-3-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">What creates filter context</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">Four things automatically create filter context in your dashboard:</p>
+        <table class="mini-table">
+          <tr><th>Source</th><th>Example</th></tr>
+          <tr><td>A slicer on the page</td><td>User selects "Hybrid" in a work_setup slicer → all measures on the page now only see Hybrid rows</td></tr>
+          <tr><td>A visual's axis or legend</td><td>Bar chart with job_title on axis → each bar has its own filter context</td></tr>
+          <tr><td>A visual's filters pane</td><td>You pin a filter on the visual for status = "Hired"</td></tr>
+          <tr><td>CALCULATE inside a measure</td><td>You explicitly override the filter context inside a formula</td></tr>
+        </table>
+        <div class="note">⚠️ The first three happen automatically — you don't write any DAX for them. The fourth (CALCULATE) is how you write measures that <em>ignore</em> or <em>override</em> the current filter context, which is how things like "% of total" work.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(2)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(4)">Start writing measures →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Total applications -->
+  <div class="step-card" id="step-4">
+    <div class="step-eyebrow">Funnel KPIs · Measure 1</div>
+    <div class="step-title">Total Applications</div>
+    <div class="step-desc">Your first and simplest measure — count all rows in fact_applications. This becomes the denominator for almost every other measure you'll write, so it's the right place to start.</div>
+
+    <div class="substep open" id="ss-4-0">
+      <div class="substep-header" onclick="toggleSub('ss-4-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Write the measure</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span>▶</span> Home → New Measure</div>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Total Applications</span> = <span class="fn">COUNTROWS</span>( <span class="tbl">fact_applications</span> )
+        </div>
+        <div class="anatomy">
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-fn">COUNTROWS</div>
+            <div class="anatomy-desc">Counts every visible row in the table — "visible" meaning whatever passes the current filter context.</div>
+          </div>
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-tbl">fact_applications</div>
+            <div class="anatomy-desc">The table to count rows from. No column needed — COUNTROWS counts entire rows.</div>
+          </div>
+        </div>
+        <div class="result-preview">
+          <div class="rp-label">Expected result</div>
+          <p style="font-size:13.5px; color:#555;">On a KPI card with no filters: <strong>2,659</strong>. In a bar chart filtered by work_setup: different number per bar. On a table filtered by "Hired": 163.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(3)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(5)">Next: Count by funnel stage →</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: Count by funnel stage -->
+  <div class="step-card" id="step-5">
+    <div class="step-eyebrow">Funnel KPIs · Measures 2–7</div>
+    <div class="step-title">Count by funnel stage</div>
+    <div class="step-desc">Your hiring funnel has 6 stages: Applied → Screened → Interviewed → Offered → Hired → Rejected. You need a count measure for each stage. This is where CALCULATE comes in for the first time.</div>
+
+    <div class="substep open" id="ss-5-0">
+      <div class="substep-header" onclick="toggleSub('ss-5-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">What CALCULATE does</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">CALCULATE is the most important function in DAX. It takes an existing measure or expression and evaluates it under a <strong>modified filter context</strong> that you specify.</p>
+        <div class="formula-box">
+<span class="fn">CALCULATE</span>( expression, filter1, filter2, ... )
+        </div>
+        <p style="font-size:13.5px; color:#555; margin: 10px 0 10px;">In plain English: "calculate this expression, but only for rows where these filter conditions are true."</p>
+        <div class="note-purple">💡 Think of CALCULATE like a WHERE clause in SQL. <code>CALCULATE(COUNTROWS(fact_applications), fact_applications[status] = "Hired")</code> is the same as <code>SELECT COUNT(*) FROM fact_applications WHERE status = 'Hired'</code>.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-5-1">
+      <div class="substep-header" onclick="toggleSub('ss-5-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Write all 6 stage count measures</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">Create a new measure for each one. Notice they all follow the exact same pattern — only the status value changes:</p>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Applied</span> = <span class="fn">CALCULATE</span>( <span class="fn">COUNTROWS</span>(<span class="tbl">fact_applications</span>), <span class="tbl">fact_applications</span>[<span class="col">status</span>] = <span class="str">"Applied"</span> )
+
+<span class="kw">Screened</span> = <span class="fn">CALCULATE</span>( <span class="fn">COUNTROWS</span>(<span class="tbl">fact_applications</span>), <span class="tbl">fact_applications</span>[<span class="col">status</span>] = <span class="str">"Screened"</span> )
+
+<span class="kw">Interviewed</span> = <span class="fn">CALCULATE</span>( <span class="fn">COUNTROWS</span>(<span class="tbl">fact_applications</span>), <span class="tbl">fact_applications</span>[<span class="col">status</span>] = <span class="str">"Interviewed"</span> )
+
+<span class="kw">Offered</span> = <span class="fn">CALCULATE</span>( <span class="fn">COUNTROWS</span>(<span class="tbl">fact_applications</span>), <span class="tbl">fact_applications</span>[<span class="col">status</span>] = <span class="str">"Offered"</span> )
+
+<span class="kw">Hired</span> = <span class="fn">CALCULATE</span>( <span class="fn">COUNTROWS</span>(<span class="tbl">fact_applications</span>), <span class="tbl">fact_applications</span>[<span class="col">status</span>] = <span class="str">"Hired"</span> )
+
+<span class="kw">Rejected</span> = <span class="fn">CALCULATE</span>( <span class="fn">COUNTROWS</span>(<span class="tbl">fact_applications</span>), <span class="tbl">fact_applications</span>[<span class="col">status</span>] = <span class="str">"Rejected"</span> )
+        </div>
+        <div class="result-preview">
+          <div class="rp-label">Expected values (no filters applied)</div>
+          <table class="mini-table">
+            <tr><th>Measure</th><th>Expected result</th></tr>
+            <tr><td>Applied</td><td class="cell-good">365</td></tr>
+            <tr><td>Screened</td><td class="cell-good">800</td></tr>
+            <tr><td>Interviewed</td><td class="cell-good">457</td></tr>
+            <tr><td>Offered</td><td class="cell-good">100</td></tr>
+            <tr><td>Hired</td><td class="cell-good">163</td></tr>
+            <tr><td>Rejected</td><td class="cell-good">774</td></tr>
+          </table>
+        </div>
+        <div class="note">⚠️ These numbers represent the furthest stage reached — "Screened" means they were screened but not interviewed. This is how your raw data was designed. The funnel visual in Phase 4 will show the cumulative drop-off.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(4)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(6)">Next: Hire rate & offer rate →</button>
+    </div>
+  </div>
+
+  <!-- STEP 6: Hire rate & offer rate -->
+  <div class="step-card" id="step-6">
+    <div class="step-eyebrow">Funnel KPIs · Measures 8–9</div>
+    <div class="step-title">Hire rate & offer rate</div>
+    <div class="step-desc">Rates are where DAX starts to feel powerful — one small formula gives you a percentage that automatically adjusts to any slicer on the page.</div>
+
+    <div class="substep open" id="ss-6-0">
+      <div class="substep-header" onclick="toggleSub('ss-6-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Why DIVIDE instead of just dividing with /</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">In DAX you could write <code>[Hired] / [Total Applications]</code>, but if Total Applications is ever zero (for example, a filter returns no rows), this throws a division-by-zero error and breaks your visual.</p>
+        <p style="font-size:13.5px; color:#555;"><code>DIVIDE</code> handles this gracefully — it returns a blank (or a value you specify) instead of an error whenever the denominator is zero.</p>
+        <div class="formula-box">
+<span class="fn">DIVIDE</span>( numerator, denominator, alternate_result )
+<span class="cmt">// alternate_result is optional — defaults to blank if omitted</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-6-1">
+      <div class="substep-header" onclick="toggleSub('ss-6-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Write hire rate and offer rate</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Hire Rate</span> = <span class="fn">DIVIDE</span>( [<span class="col">Hired</span>], [<span class="col">Total Applications</span>] )
+
+<span class="kw">Offer Rate</span> = <span class="fn">DIVIDE</span>( [<span class="col">Offered</span>], [<span class="col">Total Applications</span>] )
+        </div>
+        <div class="note-purple">💡 Notice the formula references <code>[Hired]</code> and <code>[Total Applications]</code> in square brackets — these are the measures you already created, not table columns. Measures referencing other measures is called <strong>measure chaining</strong> and is a core DAX pattern. Change [Hired] once, and Hire Rate updates automatically.</div>
+        <div class="result-preview">
+          <div class="rp-label">Format these as percentages</div>
+          <ol class="click-steps">
+            <li>Click the <strong>Hire Rate</strong> measure in the Fields panel to select it.</li>
+            <li>In the <strong>Measure tools</strong> tab that appears, click the <strong>%</strong> button and set decimal places to 1.</li>
+            <li>Repeat for <strong>Offer Rate</strong>.</li>
+          </ol>
+          <p style="font-size:13px; color:#555; margin-top:8px;">Expected: Hire Rate ≈ <strong>6.1%</strong>, Offer Rate ≈ <strong>3.8%</strong></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(5)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(7)">Next: Stage conversion rates →</button>
+    </div>
+  </div>
+
+  <!-- STEP 7: Stage conversion rates -->
+  <div class="step-card" id="step-7">
+    <div class="step-eyebrow">Funnel KPIs · Measures 10–12</div>
+    <div class="step-title">Stage conversion rates</div>
+    <div class="step-desc">These tell you the drop-off between consecutive funnel stages — what % of screened applicants got interviewed, what % of interviewed got an offer. Useful for spotting where applicants fall off.</div>
+
+    <div class="substep open" id="ss-7-0">
+      <div class="substep-header" onclick="toggleSub('ss-7-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Write the three conversion rate measures</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Screen Rate</span> = <span class="fn">DIVIDE</span>( [<span class="col">Screened</span>], [<span class="col">Total Applications</span>] )
+
+<span class="kw">Interview Rate</span> = <span class="fn">DIVIDE</span>( [<span class="col">Interviewed</span>], [<span class="col">Screened</span>] )
+
+<span class="kw">Offer Rate from Interview</span> = <span class="fn">DIVIDE</span>( [<span class="col">Offered</span>], [<span class="col">Interviewed</span>] )
+        </div>
+        <div class="result-preview">
+          <div class="rp-label">Reading the funnel together</div>
+          <table class="mini-table">
+            <tr><th>Stage</th><th>Count</th><th>Conversion from previous</th></tr>
+            <tr><td>Total Applied</td><td>2,659</td><td>—</td></tr>
+            <tr><td>Screened</td><td>800</td><td class="cell-good">Screen Rate ≈ 30%</td></tr>
+            <tr><td>Interviewed</td><td>457</td><td class="cell-good">Interview Rate ≈ 57%</td></tr>
+            <tr><td>Offered</td><td>100</td><td class="cell-good">Offer Rate from Interview ≈ 22%</td></tr>
+            <tr><td>Hired</td><td>163</td><td class="cell-good">Hire Rate ≈ 6.1% overall</td></tr>
+          </table>
+        </div>
+        <div class="note">💡 Format all three as % with 1 decimal place the same way you did for Hire Rate.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(6)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(8)">Next: Salary measures →</button>
+    </div>
+  </div>
+
+  <!-- STEP 8: Salary -->
+  <div class="step-card" id="step-8">
+    <div class="step-eyebrow">Salary · Measures 13–15</div>
+    <div class="step-title">Median & average salary</div>
+    <div class="step-desc">Salary measures work on dim_jobs, not fact_applications — because salary info lives in the job posting, not per application. These are the simplest measures you'll write.</div>
+
+    <div class="substep open" id="ss-8-0">
+      <div class="substep-header" onclick="toggleSub('ss-8-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Write median and average salary measures</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Median Salary</span> = <span class="fn">MEDIAN</span>( <span class="tbl">dim_jobs</span>[<span class="col">salary_midpoint</span>] )
+
+<span class="kw">Avg Salary</span> = <span class="fn">AVERAGE</span>( <span class="tbl">dim_jobs</span>[<span class="col">salary_midpoint</span>] )
+
+<span class="kw">Salary Range Min</span> = <span class="fn">AVERAGE</span>( <span class="tbl">dim_jobs</span>[<span class="col">salary_min</span>] )
+
+<span class="kw">Salary Range Max</span> = <span class="fn">AVERAGE</span>( <span class="tbl">dim_jobs</span>[<span class="col">salary_max</span>] )
+        </div>
+        <div class="note-purple">💡 Why MEDIAN over AVERAGE for salary? Salary distributions are almost always skewed — a few very high salaries pull the average up and make it unrepresentative. The median (middle value) is a more honest picture of what a typical job pays. Use both on your dashboard so viewers can see the difference.</div>
+        <div class="note">⚠️ These use <code>salary_midpoint</code> — the column you created in Phase 1 by averaging salary_min and salary_max per job. Rows where salary was "Negotiable" or blank will have null midpoints and are automatically excluded from MEDIAN and AVERAGE calculations.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(7)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(9)">Next: Salary by role & work setup →</button>
+    </div>
+  </div>
+
+  <!-- STEP 9: Salary by role -->
+  <div class="step-card" id="step-9">
+    <div class="step-eyebrow">Salary · Measure 16</div>
+    <div class="step-title">Salary by role & work setup</div>
+    <div class="step-desc">Good news — you don't need to write a separate measure for "median salary for Data Analysts" or "median salary for Remote jobs." The measures you already wrote handle this automatically through filter context.</div>
+
+    <div class="substep open" id="ss-9-0">
+      <div class="substep-header" onclick="toggleSub('ss-9-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">How filter context handles this for you</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:12px;">When you put <code>Median Salary</code> in a bar chart with <code>dim_jobs[job_title]</code> on the axis, Power BI automatically filters dim_jobs to each job title row-by-row and recalculates the median for each one. You don't write a new measure — the same measure works for every breakdown.</p>
+        <div class="note-purple">💡 This is the payoff from Phase 2. Because dim_jobs has clean, standardised job_title and work_setup columns, you can now slice Median Salary by any of those dimensions without writing extra DAX. The star schema does the heavy lifting.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-9-1">
+      <div class="substep-header" onclick="toggleSub('ss-9-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Average interview score — one bonus measure</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Avg Interview Score</span> = <span class="fn">AVERAGE</span>( <span class="tbl">fact_applications</span>[<span class="col">interview_score</span>] )
+        </div>
+        <p style="font-size:13.5px; color:#555; margin-top:10px;">This will automatically respond to slicers — average score for Hired applicants, average score by gender, average score by role. Same pattern, no extra work.</p>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(8)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(10)">Next: Skills measures →</button>
+    </div>
+  </div>
+
+  <!-- STEP 10: Skills -->
+  <div class="step-card" id="step-10">
+    <div class="step-eyebrow">Skills · Measure 17</div>
+    <div class="step-title">Job count by skill</div>
+    <div class="step-desc">This measure tells you how many job postings require each skill — the basis of your "most in-demand skills" bar chart. It works through the bridge table you built in Phase 2.</div>
+
+    <div class="substep open" id="ss-10-0">
+      <div class="substep-header" onclick="toggleSub('ss-10-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Write the job count by skill measure</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Jobs Requiring Skill</span> = <span class="fn">COUNTROWS</span>( <span class="tbl">bridge_job_skills</span> )
+        </div>
+        <p style="font-size:13.5px; color:#555; margin-top:10px; margin-bottom:10px;">That's it — just one line. When you put this in a bar chart with <code>dim_skills[skill_name]</code> on the axis, the bridge table's relationship filters automatically to each skill, and COUNTROWS counts how many rows (job-skill pairs) exist for that skill.</p>
+        <div class="result-preview">
+          <div class="rp-label">How to build the top skills chart</div>
+          <ol class="click-steps">
+            <li>Add a <strong>Bar Chart</strong> visual to your report.</li>
+            <li>Y-axis: <code>dim_skills[skill_name]</code></li>
+            <li>X-axis: <code>[Jobs Requiring Skill]</code></li>
+            <li>In the visual's filter pane, set Top N filter → Top 10 by Jobs Requiring Skill.</li>
+          </ol>
+        </div>
+        <div class="note-purple">💡 This works because of the many-to-many bridge setup from Phase 2. SQL appearing in 45 jobs shows as 45 on the bar — each row in bridge_job_skills is one job-skill pair, so counting rows = counting jobs that require that skill.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(9)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(11)">Next: Hire rate by gender →</button>
+    </div>
+  </div>
+
+  <!-- STEP 11: Fairness - gender -->
+  <div class="step-card" id="step-11">
+    <div class="step-eyebrow">Fairness · Measures 18–19</div>
+    <div class="step-title">Hire rate by gender</div>
+    <div class="step-desc">The fairness page of your dashboard checks whether hiring outcomes differ across demographic groups. The hire rate measure you already wrote handles most of this — but you need one additional measure to show % of total applications per gender.</div>
+
+    <div class="substep open" id="ss-11-0">
+      <div class="substep-header" onclick="toggleSub('ss-11-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Hire rate by gender — no new measure needed</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">Your existing <code>[Hire Rate]</code> measure already works for gender breakdown. Put it in a bar chart with <code>fact_applications[gender]</code> on the axis — filter context does the rest.</p>
+        <div class="note-purple">💡 The data dictionary notes that outcomes were generated independent of demographics, so you should expect near-parity across gender groups. If you see a big gap, it's worth investigating — but with synthetic data it's likely just random variation in small groups like Non-binary and Prefer not to say.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-11-1">
+      <div class="substep-header" onclick="toggleSub('ss-11-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">% of applications — introducing ALL()</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">This measure shows what share of all applications each gender represents — e.g. "Female applicants made up 31% of total applications." The trick is <code>ALL()</code>, which removes the current filter so the denominator is always the grand total.</p>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">% of Applications</span> =
+<span class="fn">DIVIDE</span>(
+    [<span class="col">Total Applications</span>],
+    <span class="fn">CALCULATE</span>( [<span class="col">Total Applications</span>], <span class="fn">ALL</span>( <span class="tbl">fact_applications</span>[<span class="col">gender</span>] ) )
+)
+        </div>
+        <div class="anatomy" style="margin-top:12px;">
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-fn">ALL( fact_applications[gender] )</div>
+            <div class="anatomy-desc">Removes any filter on the gender column — so the denominator counts all 2,659 applications regardless of which gender is in context.</div>
+          </div>
+        </div>
+        <div class="note">⚠️ This measure is gender-specific — if you reuse it in a chart sliced by education or age_band instead, the ALL() on gender column won't help. For a fully general "% of total" measure you'd use <code>ALL(fact_applications)</code> instead — but that removes all filters, which may not always be what you want.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(10)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(12)">Next: Hire rate by education & age →</button>
+    </div>
+  </div>
+
+  <!-- STEP 12: Fairness - education & age -->
+  <div class="step-card" id="step-12">
+    <div class="step-eyebrow">Fairness · Measure 20</div>
+    <div class="step-title">Hire rate by education & age band</div>
+    <div class="step-desc">No new measures needed here either. Your existing Hire Rate and Total Applications measures work automatically when you drop education or age_band onto a visual's axis.</div>
+
+    <div class="substep open" id="ss-12-0">
+      <div class="substep-header" onclick="toggleSub('ss-12-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Average years of experience by status</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <p style="font-size:13.5px; color:#555; margin-bottom:10px;">One extra measure that adds insight to the fairness page — does experience level affect hiring outcomes?</p>
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Avg Years Experience</span> = <span class="fn">AVERAGE</span>( <span class="tbl">fact_applications</span>[<span class="col">years_experience</span>] )
+        </div>
+        <p style="font-size:13.5px; color:#555; margin-top:10px;">Put this in a table visual alongside status to see whether Hired applicants had more experience on average than Rejected ones. Filter context handles the breakdown automatically.</p>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(11)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(13)">Next: Postings over time →</button>
+    </div>
+  </div>
+
+  <!-- STEP 13: Time intelligence -->
+  <div class="step-card" id="step-13">
+    <div class="step-eyebrow">Time Intelligence · Measure 21</div>
+    <div class="step-title">Postings over time</div>
+    <div class="step-desc">Time intelligence measures let you slice your data by month, quarter, or year using the dim_date table you created in Phase 2. This is where marking dim_date as a Date Table pays off.</div>
+
+    <div class="substep open" id="ss-13-0">
+      <div class="substep-header" onclick="toggleSub('ss-13-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Total job postings measure</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Total Job Postings</span> = <span class="fn">COUNTROWS</span>( <span class="tbl">dim_jobs</span> )
+        </div>
+        <p style="font-size:13.5px; color:#555; margin-top:10px; margin-bottom:10px;">Put this in a line chart with <code>dim_date[MonthName]</code> on the axis to see postings per month. Because dim_date is connected to <code>dim_jobs[posted_date]</code>, the date filter automatically flows into the job count.</p>
+        <div class="note-blue">💡 Use <code>dim_date[YearMonth]</code> (format: "2026-01") on the axis instead of MonthName if you want the months to sort chronologically. Month names sort alphabetically by default (April before January) unless you set a sort-by column.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-13-1">
+      <div class="substep-header" onclick="toggleSub('ss-13-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Cumulative postings (running total)</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Cumulative Postings</span> =
+<span class="fn">CALCULATE</span>(
+    [<span class="col">Total Job Postings</span>],
+    <span class="fn">FILTER</span>(
+        <span class="fn">ALL</span>( <span class="tbl">dim_date</span> ),
+        <span class="tbl">dim_date</span>[<span class="col">Date</span>] &lt;= <span class="fn">MAX</span>( <span class="tbl">dim_date</span>[<span class="col">Date</span>] )
+    )
+)
+        </div>
+        <div class="anatomy" style="margin-top:12px;">
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-fn">ALL( dim_date )</div>
+            <div class="anatomy-desc">Removes the current date filter so we can look back at all prior dates.</div>
+          </div>
+          <div class="anatomy-row">
+            <div class="anatomy-token tok-col">Date &lt;= MAX(Date)</div>
+            <div class="anatomy-desc">Re-applies a new filter: only dates up to and including the current date in context. This creates the running total effect.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(12)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(14)">Next: Applications MTD & by month →</button>
+    </div>
+  </div>
+
+  <!-- STEP 14: Applications MTD -->
+  <div class="step-card" id="step-14">
+    <div class="step-eyebrow">Time Intelligence · Measures 22–23</div>
+    <div class="step-title">Applications month-to-date & by month</div>
+    <div class="step-desc">Two more time measures that make your dashboard feel professional — a month-to-date running total and a clean monthly breakdown of applications.</div>
+
+    <div class="substep open" id="ss-14-0">
+      <div class="substep-header" onclick="toggleSub('ss-14-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Applications by month and MTD</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="formula-box">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+<span class="kw">Applications by Month</span> =
+<span class="fn">CALCULATE</span>(
+    [<span class="col">Total Applications</span>],
+    <span class="fn">ALLEXCEPT</span>( <span class="tbl">dim_date</span>, <span class="tbl">dim_date</span>[<span class="col">YearMonth</span>] )
+)
+
+<span class="kw">Applications MTD</span> =
+<span class="fn">TOTALMTD</span>(
+    [<span class="col">Total Applications</span>],
+    <span class="tbl">dim_date</span>[<span class="col">Date</span>]
+)
+        </div>
+        <div class="note-blue">💡 <code>TOTALMTD</code> is a built-in time intelligence shortcut — it calculates a running total from the start of the current month to the current date in context. It only works correctly because you marked dim_date as a Date Table in Phase 2.</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(13)">← Back</button>
+      <button class="btn btn-primary" onclick="goTo(15)">Next: Organise into a measure table →</button>
+    </div>
+  </div>
+
+  <!-- STEP 15: Measure table -->
+  <div class="step-card" id="step-15">
+    <div class="step-eyebrow">Finish · Final step</div>
+    <div class="step-title">Organise into a measure table</div>
+    <div class="step-desc">By now you have 20+ measures scattered across different tables in the Fields panel. A dedicated measure table keeps them all in one place — clean, professional, and easy to find when building visuals in Phase 4.</div>
+
+    <div class="substep open" id="ss-15-0">
+      <div class="substep-header" onclick="toggleSub('ss-15-0')">
+        <div class="substep-num">1</div>
+        <div class="substep-label">Create an empty _Measures table</div>
+        <div class="substep-meta">Enter Data</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <div class="where"><span>▶</span> Home tab → Enter Data</div>
+        <ol class="click-steps">
+          <li>Go to <strong>Home</strong> tab → click <strong>Enter Data</strong>.</li>
+          <li>A table editor appears. Delete any default columns. Name the table <code>_Measures</code> (the underscore pushes it to the top of the Fields panel alphabetically).</li>
+          <li>Click <strong>Load</strong>. An empty table appears in your Fields panel.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-15-1">
+      <div class="substep-header" onclick="toggleSub('ss-15-1')">
+        <div class="substep-num">2</div>
+        <div class="substep-label">Move all measures into _Measures</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <ol class="click-steps">
+          <li>In the Fields panel, find a measure you created (e.g. Total Applications under fact_applications).</li>
+          <li>Click it to select it. In the <strong>Measure tools</strong> tab at the top, find the <strong>Home Table</strong> dropdown.</li>
+          <li>Change it from <code>fact_applications</code> to <code>_Measures</code>.</li>
+          <li>Repeat for every measure. They'll all move into the _Measures table.</li>
+        </ol>
+        <div class="note-blue">💡 You can also right-click a measure in the Fields panel → Edit → change the Home Table from there. Once all measures are in _Measures, your data tables (fact_applications, dim_jobs etc.) only show their columns — much cleaner.</div>
+      </div>
+    </div>
+
+    <div class="substep" id="ss-15-2">
+      <div class="substep-header" onclick="toggleSub('ss-15-2')">
+        <div class="substep-num">3</div>
+        <div class="substep-label">Full list of measures you built</div>
+        <div class="substep-chevron">▼</div>
+      </div>
+      <div class="substep-body">
+        <table class="mini-table">
+          <tr><th>Measure</th><th>Category</th></tr>
+          <tr><td>Total Applications</td><td>Funnel</td></tr>
+          <tr><td>Applied, Screened, Interviewed, Offered, Hired, Rejected</td><td>Funnel</td></tr>
+          <tr><td>Hire Rate, Offer Rate</td><td>Funnel</td></tr>
+          <tr><td>Screen Rate, Interview Rate, Offer Rate from Interview</td><td>Funnel</td></tr>
+          <tr><td>Median Salary, Avg Salary, Salary Range Min, Salary Range Max</td><td>Salary</td></tr>
+          <tr><td>Avg Interview Score, Avg Years Experience</td><td>Performance</td></tr>
+          <tr><td>Jobs Requiring Skill</td><td>Skills</td></tr>
+          <tr><td>% of Applications</td><td>Fairness</td></tr>
+          <tr><td>Total Job Postings, Cumulative Postings</td><td>Time</td></tr>
+          <tr><td>Applications by Month, Applications MTD</td><td>Time</td></tr>
+        </table>
+        <div class="note" style="background:#e2f5ec; border-left-color:#3ab57a; color:#1a4a2a; margin-top:16px;">
+          🎉 <strong>Phase 3 complete.</strong> You now have a full library of DAX measures covering funnel KPIs, salary analysis, skills demand, hiring fairness, and time intelligence. Phase 4 is where everything comes together — building the actual dashboard pages using these measures as the data source for every visual.
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goTo(14)">← Back</button>
+      <button class="btn btn-primary" disabled>Phase 4: Dashboard Design →</button>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+  const TOTAL = 16;
+  let current = 0;
+
+  function goTo(idx) {
+    document.getElementById('step-' + current).classList.remove('active');
+    document.getElementById('nav-' + current).classList.remove('active');
+    document.getElementById('nav-' + current).classList.add('done');
+    current = idx;
+    document.getElementById('step-' + current).classList.add('active');
+    document.getElementById('nav-' + current).classList.add('active');
+    document.getElementById('nav-' + current).classList.remove('done');
+    document.getElementById('progress').style.width = (((idx + 1) / TOTAL) * 100).toFixed(1) + '%';
+    window.scrollTo(0, 0);
+  }
+
+  function toggleSub(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  function copyCode(btn) {
+    const box = btn.parentElement;
+    const text = box.innerText.replace('Copy','').replace('Copied!','').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
