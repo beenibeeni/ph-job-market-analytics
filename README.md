@@ -68,7 +68,8 @@ Star schema with:
 - `bridge_job_skills` — many-to-many link between jobs and skills
 - `dim_date` — calendar table for time intelligence
 
-👉 **[Open the Data Modeling Guide](https://beenibeeni.github.io/ph-job-market-analytics/DataModeling_Guide.html)**
+Full cleaning documentation with click-by-click instructions:
+👉 **[Open the Power Query Cleaning Guide](https://beenibeeni.github.io/ph-job-market-analytics/PowerQuery_Cleaning_Guide.html)**
 
 ---
 
