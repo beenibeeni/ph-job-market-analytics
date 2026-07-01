@@ -54,7 +54,7 @@ The raw data had several real-world messiness issues that required careful handl
 - **Embedded skills** — skills hidden inside `job_description` free text → extracted into `skills_raw` column
 - **Duplicate rows** — 4 duplicate `job_id` rows removed
 
-Full cleaning documentation with click-by-click instructions:
+Full cleaning documentation:
 👉 **[Open the Power Query Cleaning Guide](https://beenibeeni.github.io/ph-job-market-analytics/PowerQuery_Cleaning_Guide.html)**
 
 ---
@@ -68,7 +68,7 @@ Star schema with:
 - `bridge_job_skills` — many-to-many link between jobs and skills
 - `dim_date` — calendar table for time intelligence
 
-Full cleaning documentation with click-by-click instructions:
+Full data modelling documentation:
 👉 **[Open the Power Query Cleaning Guide](https://beenibeeni.github.io/ph-job-market-analytics/PowerQuery_Cleaning_Guide.html)**
 
 ---
