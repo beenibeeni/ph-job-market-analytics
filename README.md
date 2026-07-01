@@ -10,7 +10,7 @@ A data analytics portfolio project exploring the Philippine data and analytics j
 | File | Description |
 |---|---|
 | `PowerQuery_Cleaning_Guide.html` | Step-by-step interactive guide for cleaning both datasets in Power Query |
-| `Phase2_DataModeling_Guide.html` | Step-by-step interactive guide for building the star schema and relationships |
+| `DataModeling_Guide.html` | Step-by-step interactive guide for building the star schema and relationships |
 | `raw_job_postings.csv` | Raw dataset — 100 unique job postings across the Philippines |
 | `raw_applications.csv` | Raw dataset — 2,660 job applications across all postings |
 | `DATA_DICTIONARY.md` | Column definitions and data notes for both datasets |
