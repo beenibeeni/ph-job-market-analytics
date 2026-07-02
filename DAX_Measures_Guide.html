@@ -70,7 +70,7 @@
   .copy-btn:hover { background: #444440; color: #f0ede6; }
   .copy-btn.copied { background: #1a3a2a; color: #3ab57a; }
   .note { background: #fff8e6; border-left: 3px solid #f0a500; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #6a5010; margin: 12px 0; line-height: 1.5; }
-  .note-blue { background: #e8f4f8; border-left: 3px solid #4a8fa8; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #1a4f6a; margin: 12px 0; line-height: 1.5; }
+  .note-purple { background: #e8f4f8; border-left: 3px solid #4a8fa8; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #1a4f6a; margin: 12px 0; line-height: 1.5; }
   .note-purple { background: #f5eefa; border-left: 3px solid #9b59b6; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #4a1a6a; margin: 12px 0; line-height: 1.5; }
   .mini-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; }
   .mini-table th { background: #1e1e1c; color: #c8c6be; padding: 7px 12px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -221,7 +221,7 @@
           <tr><td><strong>Responds to slicers?</strong></td><td>✅ Yes — automatically</td><td>❌ No — it's fixed per row</td></tr>
           <tr><td><strong>Example</strong></td><td>Hire Rate = 6.1%</td><td>age_band = "25–34"</td></tr>
         </table>
-        <div class="note">⚠️ Almost everything you build in Phase 3 will be <strong>measures</strong> — not calculated columns. You already created calculated columns in Phase 1 (age_band, salary_midpoint). Measures are for KPIs and aggregations that need to respond to filters.</div>
+        <div class="note-purple">⚠️ Almost everything you build in Phase 3 will be <strong>measures</strong> — not calculated columns. You already created calculated columns in Phase 1 (age_band, salary_midpoint). Measures are for KPIs and aggregations that need to respond to filters.</div>
       </div>
     </div>
 
@@ -265,7 +265,7 @@
           <li>Alternatively: in the Fields panel on the right, right-click any table name → <strong>New Measure</strong>. This also controls which table the measure lives in.</li>
           <li>Type your formula in the bar and press <strong>Enter</strong> or click the checkmark ✓ to save. Press <strong>Esc</strong> to cancel without saving.</li>
         </ol>
-        <div class="note-blue">💡 Best practice: create a blank table called <code>_Measures</code> to store all your measures in one place. This keeps the Fields panel tidy. We'll set this up in the last step of this guide.</div>
+        <div class="note-purple">💡 Best practice: create a blank table called <code>_Measures</code> to store all your measures in one place. This keeps the Fields panel tidy. We'll set this up in the last step of this guide.</div>
       </div>
     </div>
 
@@ -320,7 +320,7 @@
           <tr><td><code>ALL</code></td><td>Removes filters from a table/column</td><td>% of total calculations</td></tr>
           <tr><td><code>TOTALYTD</code></td><td>Year-to-date total</td><td>Cumulative applications</td></tr>
         </table>
-        <div class="note">⚠️ You don't need to memorise all of these now. Every measure in this guide uses at most 2-3 functions. Read the formula, match each word to this table, and it'll make sense.</div>
+        <div class="note-purple">⚠️ You don't need to memorise all of these now. Every measure in this guide uses at most 2-3 functions. Read the formula, match each word to this table, and it'll make sense.</div>
       </div>
     </div>
 
@@ -364,7 +364,7 @@
           <tr><td>A visual's filters pane</td><td>You pin a filter on the visual for status = "Hired"</td></tr>
           <tr><td>CALCULATE inside a measure</td><td>You explicitly override the filter context inside a formula</td></tr>
         </table>
-        <div class="note">⚠️ The first three happen automatically — you don't write any DAX for them. The fourth (CALCULATE) is how you write measures that <em>ignore</em> or <em>override</em> the current filter context, which is how things like "% of total" work.</div>
+        <div class="note-purple">⚠️ The first three happen automatically — you don't write any DAX for them. The fourth (CALCULATE) is how you write measures that <em>ignore</em> or <em>override</em> the current filter context, which is how things like "% of total" work.</div>
       </div>
     </div>
 
@@ -471,7 +471,7 @@
             <tr><td>Rejected</td><td class="cell-good">774</td></tr>
           </table>
         </div>
-        <div class="note">⚠️ These numbers represent the furthest stage reached — "Screened" means they were screened but not interviewed. This is how your raw data was designed. The funnel visual in Phase 4 will show the cumulative drop-off.</div>
+        <div class="note-purple">⚠️ These numbers represent the furthest stage reached — "Screened" means they were screened but not interviewed. This is how your raw data was designed. The funnel visual in Phase 4 will show the cumulative drop-off.</div>
       </div>
     </div>
 
@@ -567,7 +567,7 @@
             <tr><td>Hired</td><td>163</td><td class="cell-good">Hire Rate ≈ 6.1% overall</td></tr>
           </table>
         </div>
-        <div class="note">💡 Format all three as % with 1 decimal place the same way you did for Hire Rate.</div>
+        <div class="note-purple">💡 Format all three as % with 1 decimal place the same way you did for Hire Rate.</div>
       </div>
     </div>
 
@@ -601,7 +601,7 @@
 <span class="kw">Salary Range Max</span> = <span class="fn">AVERAGE</span>( <span class="tbl">dim_jobs</span>[<span class="col">salary_max</span>] )
         </div>
         <div class="note-purple">💡 Why MEDIAN over AVERAGE for salary? Salary distributions are almost always skewed — a few very high salaries pull the average up and make it unrepresentative. The median (middle value) is a more honest picture of what a typical job pays. Use both on your dashboard so viewers can see the difference.</div>
-        <div class="note">⚠️ These use <code>salary_midpoint</code> — the column you created in Phase 1 by averaging salary_min and salary_max per job. Rows where salary was "Negotiable" or blank will have null midpoints and are automatically excluded from MEDIAN and AVERAGE calculations.</div>
+        <div class="note-purple">⚠️ These use <code>salary_midpoint</code> — the column you created in Phase 1 by averaging salary_min and salary_max per job. Rows where salary was "Negotiable" or blank will have null midpoints and are automatically excluded from MEDIAN and AVERAGE calculations.</div>
       </div>
     </div>
 
@@ -727,7 +727,7 @@
             <div class="anatomy-desc">Removes any filter on the gender column — so the denominator counts all 2,659 applications regardless of which gender is in context.</div>
           </div>
         </div>
-        <div class="note">⚠️ This measure is gender-specific — if you reuse it in a chart sliced by education or age_band instead, the ALL() on gender column won't help. For a fully general "% of total" measure you'd use <code>ALL(fact_applications)</code> instead — but that removes all filters, which may not always be what you want.</div>
+        <div class="note-purple">⚠️ This measure is gender-specific — if you reuse it in a chart sliced by education or age_band instead, the ALL() on gender column won't help. For a fully general "% of total" measure you'd use <code>ALL(fact_applications)</code> instead — but that removes all filters, which may not always be what you want.</div>
       </div>
     </div>
 
@@ -783,7 +783,7 @@
 <span class="kw">Total Job Postings</span> = <span class="fn">COUNTROWS</span>( <span class="tbl">dim_jobs</span> )
         </div>
         <p style="font-size:13.5px; color:#555; margin-top:10px; margin-bottom:10px;">Put this in a line chart with <code>dim_date[MonthName]</code> on the axis to see postings per month. Because dim_date is connected to <code>dim_jobs[posted_date]</code>, the date filter automatically flows into the job count.</p>
-        <div class="note-blue">💡 Use <code>dim_date[YearMonth]</code> (format: "2026-01") on the axis instead of MonthName if you want the months to sort chronologically. Month names sort alphabetically by default (April before January) unless you set a sort-by column.</div>
+        <div class="note-purple">💡 Use <code>dim_date[YearMonth]</code> (format: "2026-01") on the axis instead of MonthName if you want the months to sort chronologically. Month names sort alphabetically by default (April before January) unless you set a sort-by column.</div>
       </div>
     </div>
 
@@ -851,7 +851,7 @@
     <span class="tbl">dim_date</span>[<span class="col">Date</span>]
 )
         </div>
-        <div class="note-blue">💡 <code>TOTALMTD</code> is a built-in time intelligence shortcut — it calculates a running total from the start of the current month to the current date in context. It only works correctly because you marked dim_date as a Date Table in Phase 2.</div>
+        <div class="note-purple">💡 <code>TOTALMTD</code> is a built-in time intelligence shortcut — it calculates a running total from the start of the current month to the current date in context. It only works correctly because you marked dim_date as a Date Table in Phase 2.</div>
       </div>
     </div>
 
@@ -897,7 +897,7 @@
           <li>Change it from <code>fact_applications</code> to <code>_Measures</code>.</li>
           <li>Repeat for every measure. They'll all move into the _Measures table.</li>
         </ol>
-        <div class="note-blue">💡 You can also right-click a measure in the Fields panel → Edit → change the Home Table from there. Once all measures are in _Measures, your data tables (fact_applications, dim_jobs etc.) only show their columns — much cleaner.</div>
+        <div class="note-purple">💡 You can also right-click a measure in the Fields panel → Edit → change the Home Table from there. Once all measures are in _Measures, your data tables (fact_applications, dim_jobs etc.) only show their columns — much cleaner.</div>
       </div>
     </div>
 
@@ -921,7 +921,7 @@
           <tr><td>Total Job Postings, Cumulative Postings</td><td>Time</td></tr>
           <tr><td>Applications by Month, Applications MTD</td><td>Time</td></tr>
         </table>
-        <div class="note" style="background:#e2f5ec; border-left-color:#3ab57a; color:#1a4a2a; margin-top:16px;">
+        <div class="note-purple" style="background:#e2f5ec; border-left-color:#3ab57a; color:#1a4a2a; margin-top:16px;">
           🎉 <strong>Phase 3 complete.</strong> You now have a full library of DAX measures covering funnel KPIs, salary analysis, skills demand, hiring fairness, and time intelligence. Phase 4 is where everything comes together — building the actual dashboard pages using these measures as the data source for every visual.
         </div>
       </div>
