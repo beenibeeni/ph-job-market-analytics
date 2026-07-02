@@ -59,7 +59,7 @@
   .click-steps li:last-child { border-bottom: none; }
   .click-steps li::before { content: counter(cstep); width: 22px; height: 22px; border-radius: 50%; background: #1e1e1c; color: #f0ede6; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
   .note { background: #fff8e6; border-left: 3px solid #f0a500; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #6a5010; margin: 12px 0; line-height: 1.5; }
-  .note-blue { background: #e8f4f8; border-left: 3px solid #4a8fa8; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #1a4f6a; margin: 12px 0; line-height: 1.5; }
+  .note-orange { background: #e8f4f8; border-left: 3px solid #4a8fa8; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #1a4f6a; margin: 12px 0; line-height: 1.5; }
   .note-green { background: #e2f5ec; border-left: 3px solid #3ab57a; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #1a4a2a; margin: 12px 0; line-height: 1.5; }
   .note-orange { background: #fdeee4; border-left: 3px solid #e07b39; border-radius: 0 6px 6px 0; padding: 10px 14px; font-size: 13px; color: #6a2a10; margin: 12px 0; line-height: 1.5; }
   .mini-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; }
@@ -187,7 +187,7 @@
           <li>Drag fields from the <strong>Fields</strong> pane (far right) into the field wells in the Visualizations pane — or drag directly onto the canvas placeholder.</li>
           <li>Resize by dragging the corners. Move by dragging the title bar of the visual.</li>
         </ol>
-        <div class="note-blue">💡 If you click somewhere on the canvas first and then click a visual type, the new visual might replace your selection. Always click blank canvas space first before adding a new visual.</div>
+        <div class="note-orange">💡 If you click somewhere on the canvas first and then click a visual type, the new visual might replace your selection. Always click blank canvas space first before adding a new visual.</div>
       </div>
     </div>
 
@@ -233,7 +233,7 @@
           <tr><td>Compare two numbers side by side</td><td>Clustered bar chart</td><td>Hire rate by gender</td></tr>
           <tr><td>Geographic distribution</td><td>Map or filled map</td><td>Applications by city</td></tr>
         </table>
-        <div class="note">⚠️ Avoid pie charts with more than 4 categories — they become impossible to read. Use a bar chart instead. And never use 3D charts — they distort the data visually and make comparisons harder, not easier.</div>
+        <div class="note-orange">⚠️ Avoid pie charts with more than 4 categories — they become impossible to read. Use a bar chart instead. And never use 3D charts — they distort the data visually and make comparisons harder, not easier.</div>
       </div>
     </div>
 
@@ -401,7 +401,7 @@
           <li>Under <strong>Category label</strong> → change the text to <code>Job Postings</code>, set font size to 12pt.</li>
           <li>Turn off the card border or set a subtle one — your choice.</li>
         </ol>
-        <div class="note-blue">💡 Repeat the same process for Total Applications, and for unique companies use <code>dim_jobs[company]</code> in a Card visual set to Count Distinct (click the dropdown arrow next to the field in the well → Count Distinct).</div>
+        <div class="note-orange">💡 Repeat the same process for Total Applications, and for unique companies use <code>dim_jobs[company]</code> in a Card visual set to Count Distinct (click the dropdown arrow next to the field in the well → Count Distinct).</div>
       </div>
     </div>
 
@@ -433,7 +433,7 @@
           <li>Turn on <strong>Markers</strong> so each month has a dot on the line.</li>
           <li>Set the title to <code>Job Postings by Month</code>.</li>
         </ol>
-        <div class="note">⚠️ If the X-axis sorts alphabetically instead of chronologically (April before January), click the <strong>YearMonth</strong> column in the Fields panel → Column tools tab → <strong>Sort by Column</strong> → choose a numeric month column. This is why we created YearMonth as "2026-01" format — it sorts correctly as text.</div>
+        <div class="note-orange">⚠️ If the X-axis sorts alphabetically instead of chronologically (April before January), click the <strong>YearMonth</strong> column in the Fields panel → Column tools tab → <strong>Sort by Column</strong> → choose a numeric month column. This is why we created YearMonth as "2026-01" format — it sorts correctly as text.</div>
       </div>
     </div>
 
@@ -484,7 +484,7 @@
           <li>In Format → <strong>Detail labels</strong> → set label to show both the category name and percentage.</li>
           <li>Title: <code>Work Setup Distribution</code></li>
         </ol>
-        <div class="note-blue">💡 Donut charts work well here because there are only 3 categories (Remote, Hybrid, Onsite). Three slices are easy to read. If you had 8+ categories, switch to a bar chart instead.</div>
+        <div class="note-orange">💡 Donut charts work well here because there are only 3 categories (Remote, Hybrid, Onsite). Three slices are easy to read. If you had 8+ categories, switch to a bar chart instead.</div>
       </div>
     </div>
 
@@ -616,7 +616,7 @@
           <li>In Format → <strong>Cell elements</strong> → turn on <strong>Data bars</strong> — this adds a coloured bar inside each cell proportional to the value, making patterns much easier to read visually.</li>
           <li>Title: <code>Skills by Job Title</code></li>
         </ol>
-        <div class="note-blue">💡 The matrix might be wide if there are many skills. Resize it to take up most of the page width, and use the scroll bar to explore. Alternatively add a slicer for skill_name and let the viewer filter to their skills of interest.</div>
+        <div class="note-orange">💡 The matrix might be wide if there are many skills. Resize it to take up most of the page width, and use the scroll bar to explore. Alternatively add a slicer for skill_name and let the viewer filter to their skills of interest.</div>
       </div>
     </div>
 
@@ -685,7 +685,7 @@
           <li>Turn on Data labels in Format — set to show the ₱ value on each bar end.</li>
           <li>Title: <code>Median Monthly Salary by Role (₱)</code></li>
         </ol>
-        <div class="note">⚠️ Rows with null salary_midpoint (Negotiable jobs) are automatically excluded from the median calculation — this is correct behaviour. Note this in your dashboard with a small text box: "Excludes roles listed as Negotiable."</div>
+        <div class="note-orange">⚠️ Rows with null salary_midpoint (Negotiable jobs) are automatically excluded from the median calculation — this is correct behaviour. Note this in your dashboard with a small text box: "Excludes roles listed as Negotiable."</div>
       </div>
     </div>
 
@@ -784,7 +784,7 @@
           <li>Add a <strong>Table visual</strong> first and put all 6 stage measures as columns — this lets you verify the numbers before building the funnel.</li>
           <li>For the funnel itself: create a <strong>What-if parameter</strong> or use the <strong>Field parameter</strong> feature — or the simplest approach: add all 6 stage measures directly as Values in the funnel's Values well, one by one.</li>
         </ol>
-        <div class="note">⚠️ Power BI's funnel chart is designed for a Category + single Value field. The cleanest way to show all 6 stages is to add a small <strong>summary table</strong> visual instead of a funnel if the funnel layout is tricky — a table with Stage and Count columns clearly shows the drop-off with data bars enabled.</div>
+        <div class="note-orange">⚠️ Power BI's funnel chart is designed for a Category + single Value field. The cleanest way to show all 6 stages is to add a small <strong>summary table</strong> visual instead of a funnel if the funnel layout is tricky — a table with Stage and Count columns clearly shows the drop-off with data bars enabled.</div>
         <div class="note-orange">💡 Alternatively: use a <strong>Clustered column chart</strong> with all 6 stage measures as separate series — this creates a visual waterfall effect that shows the funnel clearly without the native funnel chart limitations.</div>
       </div>
     </div>
@@ -815,8 +815,8 @@
           <tr><td>By education</td><td>fact_applications[education]</td><td>[Hire Rate]</td><td>Hire Rate by Education</td></tr>
           <tr><td>By age band</td><td>fact_applications[age_band]</td><td>[Hire Rate]</td><td>Hire Rate by Age Group</td></tr>
         </table>
-        <div class="note-blue">💡 Format [Hire Rate] as % on the X-axis (click the axis → Format → display unit as %). Since the data was generated independent of demographics, expect the bars to be roughly equal height — near-parity is the correct and expected result here. You can add a reference line at the overall hire rate (6.1%) to make it easier to spot any group that's above or below average.</div>
-        <div class="note">⚠️ Add a small text box note on this page: "Note: Outcomes were generated independent of demographics. Near-parity is expected." This shows analytical maturity — you're not just showing the chart, you're providing context for how to interpret it.</div>
+        <div class="note-orange">💡 Format [Hire Rate] as % on the X-axis (click the axis → Format → display unit as %). Since the data was generated independent of demographics, expect the bars to be roughly equal height — near-parity is the correct and expected result here. You can add a reference line at the overall hire rate (6.1%) to make it easier to spot any group that's above or below average.</div>
+        <div class="note-orange">⚠️ Add a small text box note on this page: "Note: Outcomes were generated independent of demographics. Near-parity is expected." This shows analytical maturity — you're not just showing the chart, you're providing context for how to interpret it.</div>
       </div>
     </div>
 
