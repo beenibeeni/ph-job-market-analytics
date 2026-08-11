@@ -121,6 +121,20 @@ Star schema with 5 tables and 4 relationships:
 👉 **[Open the DAX Measures Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/DAX_Measures_Guide.html)**
 
 ---
+ 
+## 📚 Build Documentation
+ 
+Every phase of this project is documented as an interactive step-by-step guide — including the reasoning behind each decision. All guides are in the `/docs` folder.
+ 
+| Guide | What it covers |
+|---|---|
+| [Power Query Cleaning Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/PowerQuery_Cleaning_Guide.html) | Assessing data quality, all cleaning steps for both tables |
+| [Data Modeling Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/DataModeling_Guide.html) | Star schema design, dim/fact decisions, relationships |
+| [DAX Measures Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/DAX_Measures_Guide.html) | Filter context, all 20+ measures explained |
+| [Dashboard Design Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/Dashboard_Design_Guide.html) | Building all 4 pages, chart types, formatting |
+| [Slicer Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/Slicer_Guide.html) | Adding interactive filters to the sidebar |
+
+---
 
 ## Dashboard Screenshots
 
@@ -139,23 +153,36 @@ Star schema with 5 tables and 4 relationships:
 ---
 
 ## Repository Contents
-
+ 
+**Dashboard files:**
+ 
 | File | Description |
 |---|---|
 | `PH_Job_Market_Analytics.pbix` | Power BI Desktop file — full dashboard with all data, measures and visuals |
 | `PH_Job_Market_Analytics_Dashboard.pdf` | Exported PDF — all 4 dashboard pages for viewing without Power BI |
+| `raw_job_postings.csv` | Raw dataset — 100 job postings |
+| `raw_applications.csv` | Raw dataset — 2,659 applications |
+| `DATA_DICTIONARY.md` | Column definitions and data notes for both datasets |
+ 
+**Screenshots:**
+ 
+| File | Description |
+|---|---|
 | `page1_market_overview.png` | Screenshot — Market Overview page |
 | `page2_skills_analysis.png` | Screenshot — Skills Analysis page |
 | `page3_salary_insights.png` | Screenshot — Salary Insights page |
 | `page4_recruitment_funnel.png` | Screenshot — Recruitment Funnel & Fairness page |
-| `PowerQuery_Cleaning_Guide.html` | Interactive step-by-step guide — data cleaning in Power Query |
-| `DataModeling_Guide.html` | Interactive step-by-step guide — star schema and relationships |
-| `DAX_Measures_Guide.html` | Interactive step-by-step guide — all DAX measures explained |
-| `Dashboard_Design_Guide.html` | Interactive step-by-step guide — building the 4 dashboard pages |
-| `raw_job_postings.csv` | Raw dataset — 100 job postings |
-| `raw_applications.csv` | Raw dataset — 2,659 applications |
-| `DATA_DICTIONARY.md` | Column definitions and data notes for both datasets |
-
+ 
+**Build Documentation (`/docs` folder):**
+ 
+| File | Description |
+|---|---|
+| `docs/PowerQuery_Cleaning_Guide.html` | Interactive guide — data cleaning in Power Query |
+| `docs/DataModeling_Guide.html` | Interactive guide — star schema and relationships |
+| `docs/DAX_Measures_Guide.html` | Interactive guide — DAX measures explained |
+| `docs/Dashboard_Design_Guide.html` | Interactive guide — building the 4 dashboard pages |
+| `docs/Slicer_Guide.html` | Interactive guide — adding slicers to the sidebar |
+ 
 ---
 
 ## Project Status
