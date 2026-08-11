@@ -7,7 +7,7 @@
 
 ---
 
-## 🔍 Problem Statement
+## Problem Statement
 
 The Philippine data and analytics job market is growing rapidly but fragmented. Job seekers, hiring managers, and career coaches lack a consolidated view of what roles exist, what they pay, what skills are required, and how competitive the hiring process actually is.
 
@@ -20,7 +20,7 @@ This dashboard addresses that gap by turning raw hiring data into actionable ins
 
 ---
 
-## ❓ Questions Answered
+## Questions Answered
 
 **Market** — What does the landscape look like?
 - Which data roles are most in demand in the Philippines?
@@ -62,7 +62,7 @@ This dashboard addresses that gap by turning raw hiring data into actionable ins
 
 ---
 
-## 📊 Dashboard Pages
+## Dashboard Pages
 
 | Page | Questions it answers |
 |---|---|
@@ -73,7 +73,7 @@ This dashboard addresses that gap by turning raw hiring data into actionable ins
 
 ---
 
-## 🛠️ Tools & Technical Skills
+## Tools & Technical Skills
 
 | Tool / Skill | What I did with it |
 |---|---|
@@ -85,7 +85,7 @@ This dashboard addresses that gap by turning raw hiring data into actionable ins
 
 ---
 
-## 🧹 Data Cleaning Highlights
+## Data Cleaning Highlights
 
 The raw data had several real-world messiness issues:
 
@@ -99,7 +99,7 @@ The raw data had several real-world messiness issues:
 
 ---
 
-## 🗂️ Data Model
+## Data Model
 
 Star schema with 5 tables and 4 relationships:
 
@@ -113,7 +113,7 @@ Star schema with 5 tables and 4 relationships:
 
 ---
 
-## 📈 DAX Measures
+## DAX Measures
 
 20+ measures covering funnel KPIs, salary analysis, skills demand, hiring fairness, and time intelligence.
 
@@ -121,7 +121,7 @@ Star schema with 5 tables and 4 relationships:
 
 ---
 
-## 📸 Dashboard Screenshots
+## Dashboard Screenshots
 
 ### Page 1 — Market Overview
 ![Market Overview](page1_market_overview.png)
@@ -157,7 +157,7 @@ Star schema with 5 tables and 4 relationships:
 
 ---
 
-## 📌 Project Status
+## Project Status
 
 | Phase | Status |
 |---|---|
