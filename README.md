@@ -1,9 +1,9 @@
-# 🇵🇭 Philippine Data Job Market Dashboard
+# Philippine Data Job Market Dashboard
 **Personal Portfolio Project · Power BI · 2026**
 
 > *"I built an end-to-end Power BI dashboard analyzing the Philippine data job market — covering market trends, in-demand skills, salary benchmarks, and hiring funnel performance — starting from two raw messy CSV files and ending with an interactive four-page dashboard."*
 
-> ⚠️ **Note:** This project uses a **synthetic dataset** generated for learning purposes. All company names are fictional Filipino startup-style names. No real applicant PII is included. The data is intentionally messy to simulate real-world cleaning challenges.
+> **Note:** This project uses a **synthetic dataset** generated for learning purposes. All company names are fictional Filipino startup-style names. No real applicant PII is included. The data is intentionally messy to simulate real-world cleaning challenges.
 
 ---
 
@@ -137,7 +137,7 @@ Star schema with 5 tables and 4 relationships:
 
 ---
 
-## 📁 Repository Contents
+## Repository Contents
 
 | File | Description |
 |---|---|
@@ -161,10 +161,10 @@ Star schema with 5 tables and 4 relationships:
 
 | Phase | Status |
 |---|---|
-| Phase 1 — Data Cleaning (Power Query) | ✅ Complete |
-| Phase 2 — Data Modeling (Star Schema) | ✅ Complete |
-| Phase 3 — DAX Measures | ✅ Complete |
-| Phase 4 — Dashboard Design | ✅ Complete |
+| Phase 1 — Data Cleaning (Power Query) | Complete |
+| Phase 2 — Data Modeling (Star Schema) | Complete |
+| Phase 3 — DAX Measures | Complete |
+| Phase 4 — Dashboard Design | Complete |
 
 ---
 
