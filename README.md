@@ -122,7 +122,7 @@ Star schema with 5 tables and 4 relationships:
 
 ---
  
-## 📚 Build Documentation
+## Build Documentation
  
 Every phase of this project is documented as an interactive step-by-step guide — including the reasoning behind each decision. All guides are in the `/docs` folder.
  
