@@ -95,7 +95,7 @@ The raw data had several real-world messiness issues:
 - **Embedded skills** — skills hidden inside `job_description` free text → extracted into `skills_raw` column
 - **Duplicate rows** — 4 duplicate `job_id` rows removed
 
-👉 **[Open the Power Query Cleaning Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/PowerQuery_Cleaning_Guide.html)**
+👉 **[Open the Power Query Cleaning Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/PowerQuery_Cleaning_Guide.html)**
 
 
 ---
@@ -110,7 +110,7 @@ Star schema with 5 tables and 4 relationships:
 - `bridge_job_skills` — many-to-many link between jobs and skills
 - `dim_date` — calendar table for time intelligence (Jan–Jun 2026)
 
-👉 **[Open the Data Modeling Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/DataModeling_Guide.html)**
+👉 **[Open the Data Modeling Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/DataModeling_Guide.html)**
 
 ---
 
@@ -118,7 +118,7 @@ Star schema with 5 tables and 4 relationships:
 
 20+ measures covering funnel KPIs, salary analysis, skills demand, hiring fairness, and time intelligence.
 
-👉 **[Open the DAX Measures Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/DAX_Measures_Guide.html)**
+👉 **[Open the DAX Measures Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/DAX_Measures_Guide.html)**
 
 ---
  
