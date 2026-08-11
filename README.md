@@ -132,7 +132,6 @@ Every phase of this project is documented as an interactive step-by-step guide â
 | [Data Modeling Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/DataModeling_Guide.html) | Star schema design, dim/fact decisions, relationships |
 | [DAX Measures Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/DAX_Measures_Guide.html) | Filter context, all 20+ measures explained |
 | [Dashboard Design Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/Dashboard_Design_Guide.html) | Building all 4 pages, chart types, formatting |
-| [Slicer Guide](https://jannellecandelaria.github.io/ph-job-market-analytics/docs/Slicer_Guide.html) | Adding interactive filters to the sidebar |
 
 ---
 
