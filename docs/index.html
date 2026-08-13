@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PH Data Job Market — Build Documentation</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1b2a; color: #f0ede6; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+
+  .container { max-width: 680px; width: 100%; }
+
+  .header { margin-bottom: 48px; }
+  .back-link { font-size: 12px; color: #6c6b64; text-decoration: none; letter-spacing: 0.06em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 24px; }
+  .back-link:hover { color: #f0a500; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #f0a500; margin-bottom: 8px; }
+  .title { font-size: 28px; font-weight: 700; color: #f0ede6; line-height: 1.2; margin-bottom: 12px; }
+  .subtitle { font-size: 15px; color: #8a8880; line-height: 1.6; }
+
+  .guides { display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+
+  .guide-card { background: #1e1e1c; border: 1px solid #2a2a27; border-radius: 12px; padding: 20px 24px; text-decoration: none; display: flex; align-items: center; gap: 20px; transition: border-color 0.15s, transform 0.1s; }
+  .guide-card:hover { border-color: #f0a500; transform: translateX(4px); }
+
+  .guide-num { width: 36px; height: 36px; border-radius: 50%; background: #f0a500; color: #0d1b2a; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .guide-info { flex: 1; }
+  .guide-phase { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6c6b64; margin-bottom: 4px; }
+  .guide-title { font-size: 16px; font-weight: 600; color: #f0ede6; margin-bottom: 4px; }
+  .guide-desc { font-size: 13px; color: #6c6b64; line-height: 1.5; }
+  .guide-arrow { color: #4a4a44; font-size: 18px; flex-shrink: 0; transition: color 0.15s; }
+  .guide-card:hover .guide-arrow { color: #f0a500; }
+
+  .footer { border-top: 1px solid #2a2a27; padding-top: 24px; display: flex; align-items: center; justify-content: space-between; }
+  .footer-left { font-size: 13px; color: #4a4a44; }
+  .footer-links { display: flex; gap: 16px; }
+  .footer-links a { font-size: 12px; color: #6c6b64; text-decoration: none; }
+  .footer-links a:hover { color: #f0a500; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <a href="https://github.com/jannellecandelaria/ph-job-market-analytics" class="back-link">← Back to Repository</a>
+    <div class="eyebrow">🇵🇭 PH Data Job Market Dashboard</div>
+    <h1 class="title">Build Documentation</h1>
+    <p class="subtitle">Every phase of this project is documented as an interactive step-by-step guide — including the reasoning behind each decision. Click any guide to open it.</p>
+  </div>
+
+  <div class="guides">
+
+    <a href="PowerQuery_Cleaning_Guide.html" class="guide-card">
+      <div class="guide-num">1</div>
+      <div class="guide-info">
+        <div class="guide-phase">Phase 1</div>
+        <div class="guide-title">Data Cleaning in Power Query</div>
+        <div class="guide-desc">Assessing data quality · removing duplicates · standardizing categories · parsing mixed dates · extracting salary numbers · skills extraction</div>
+      </div>
+      <div class="guide-arrow">→</div>
+    </a>
+
+    <a href="DataModeling_Guide.html" class="guide-card">
+      <div class="guide-num">2</div>
+      <div class="guide-info">
+        <div class="guide-phase">Phase 2</div>
+        <div class="guide-title">Data Modeling — Star Schema</div>
+        <div class="guide-desc">Star schema design · fact vs dimension decisions · primary and foreign keys · bridge table for many-to-many · dim_date · relationships in Model view</div>
+      </div>
+      <div class="guide-arrow">→</div>
+    </a>
+
+    <a href="DAX_Measures_Guide.html" class="guide-card">
+      <div class="guide-num">3</div>
+      <div class="guide-info">
+        <div class="guide-phase">Phase 3</div>
+        <div class="guide-title">DAX Measures</div>
+        <div class="guide-desc">Filter context · CALCULATE · DIVIDE · MEDIAN · funnel KPIs · hire rate · salary measures · skills ranking · time intelligence · 20+ measures explained</div>
+      </div>
+      <div class="guide-arrow">→</div>
+    </a>
+
+    <a href="Dashboard_Design_Guide.html" class="guide-card">
+      <div class="guide-num">4</div>
+      <div class="guide-info">
+        <div class="guide-phase">Phase 4</div>
+        <div class="guide-title">Dashboard Design</div>
+        <div class="guide-desc">Chart type selection · building all 4 pages · sidebar navigation · slicers · formatting · theme · final checklist</div>
+      </div>
+      <div class="guide-arrow">→</div>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">© 2026 Jannelle Candelaria</div>
+    <div class="footer-links">
+      <a href="https://github.com/jannellecandelaria/ph-job-market-analytics">GitHub Repo</a>
+      <a href="https://github.com/jannellecandelaria">Portfolio</a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
